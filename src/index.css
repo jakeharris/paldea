@@ -12,7 +12,7 @@
   /* ── Fonts ── */
   --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "DM Sans", ui-monospace, monospace;
+  --font-mono: ui-monospace, monospace;
 
   /* ── Mismagius Purples (primary) ── */
   --color-purple-50: #f5e6ff;

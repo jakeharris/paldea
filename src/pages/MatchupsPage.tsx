@@ -105,7 +105,7 @@ export function MatchupsPage() {
     <div className="flex flex-col gap-6">
       {/* Opponent selector */}
       <div className="glass rounded-card p-4 flex items-center gap-4">
-        <label className="font-mono text-sm text-text-secondary shrink-0">
+        <label className="font-body text-sm text-text-secondary shrink-0">
           Opponent
         </label>
         <select

@@ -8,7 +8,7 @@ export function Header() {
           PALDEA
         </h1>
         <div className="flex items-center gap-3">
-          <p className="font-mono text-sm text-text-secondary">
+          <p className="font-body text-sm text-text-secondary">
             Draft League Manager
           </p>
           <DataMenu />

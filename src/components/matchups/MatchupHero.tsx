@@ -49,7 +49,7 @@ function PokemonSprite({
           </div>
         </button>
       </div>
-      <span className={`font-mono text-[10px] text-center max-w-[70px] leading-tight
+      <span className={`font-body text-[10px] text-center max-w-[70px] leading-tight
         ${excluded ? "line-through text-text-muted" : "text-text-secondary"}`}
       >
         {name}
@@ -120,7 +120,7 @@ export function MatchupHero({
         </div>
       </div>
 
-      <p className="font-mono text-[10px] text-text-muted mt-4">
+      <p className="font-body text-[10px] text-text-muted mt-4">
         Hover a sprite and click the checkmark to exclude a Pokémon from analysis
       </p>
     </div>

@@ -65,7 +65,7 @@ function CategorySection({
                       className="w-4 h-4 [image-rendering:pixelated]"
                       onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = getSpriteUrl(entry.pokemonName); }}
                     />
-                    <span className="font-mono text-[10px] text-text-secondary">{entry.pokemonName}</span>
+                    <span className="font-body text-[10px] text-text-secondary">{entry.pokemonName}</span>
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {entry.moves.map((move) => (
@@ -140,7 +140,7 @@ export function MoveCategoryPanel({
         <h3 className="font-display text-base font-semibold text-text-primary">
           Move Categories
         </h3>
-        <p className="font-mono text-xs text-text-muted mt-0.5">
+        <p className="font-body text-xs text-text-muted mt-0.5">
           Move pool analysis for both teams
         </p>
       </div>

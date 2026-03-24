@@ -83,7 +83,7 @@ export function CoveragePlanner({
         <h3 className="font-display text-base font-semibold text-text-primary">
           Coverage Planner
         </h3>
-        <p className="font-mono text-xs text-text-muted mt-0.5">
+        <p className="font-body text-xs text-text-muted mt-0.5">
           Select offensive types to see how they hit the opponent's team
         </p>
       </div>
@@ -133,7 +133,7 @@ export function CoveragePlanner({
                       className="w-8 h-8 [image-rendering:pixelated]"
                       onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = getSpriteUrl(mon.name); }}
                     />
-                    <span className="font-mono text-[10px] text-text-secondary text-center leading-tight">
+                    <span className="font-body text-[10px] text-text-secondary text-center leading-tight">
                       {mon.name}
                     </span>
                     {/* Reserve space for multiplier badge + one type row so height doesn't jump */}
@@ -154,7 +154,7 @@ export function CoveragePlanner({
                       className="w-8 h-8 [image-rendering:pixelated]"
                       onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = getSpriteUrl(result.pokemon.name); }}
                     />
-                    <span className="font-mono text-[10px] text-text-secondary text-center leading-tight">
+                    <span className="font-body text-[10px] text-text-secondary text-center leading-tight">
                       {result.pokemon.name}
                     </span>
                     <MultiplierBadge multiplier={result.bestMultiplier} />

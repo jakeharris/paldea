@@ -16,7 +16,7 @@ export function Nav() {
             <NavLink
               to={item.to}
               className={({ isActive }) =>
-                `block px-4 py-2 rounded-lg font-mono text-sm transition-colors duration-200 ${
+                `block px-4 py-2 rounded-lg font-body text-sm transition-colors duration-200 ${
                   isActive
                     ? "text-text-primary bg-surface-raised"
                     : "text-text-secondary hover:text-text-primary hover:bg-surface-raised"

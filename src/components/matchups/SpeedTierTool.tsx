@@ -26,7 +26,7 @@ function ToggleButton({
   return (
     <button
       onClick={onClick}
-      className={`text-[11px] font-mono px-2.5 py-1 rounded-pill transition-colors ${
+      className={`text-[11px] font-body px-2.5 py-1 rounded-pill transition-colors ${
         active
           ? "bg-accent/20 text-accent"
           : "text-text-muted hover:text-text-secondary hover:bg-surface-raised"
@@ -51,9 +51,18 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
     [myTeam, selectedMyMon],
   );
 
+  const mySpeed = useMemo(() => {
+    if (!selectedMon) return null;
+    return calcSpeed(selectedMon.baseStats.spe, 252, {
+      plusNature: myPlusNature,
+      scarf: myScarf,
+      speedStage: myStage,
+    });
+  }, [selectedMon, myPlusNature, myScarf, myStage]);
+
   const creepRows = useMemo(() => {
     if (!selectedMon) return [];
-    return oppTeam.map((opp) => {
+    return [...oppTeam].sort((a, b) => b.baseStats.spe - a.baseStats.spe).map((opp) => {
       const base = selectedMon.baseStats.spe;
       const oppBase = opp.baseStats.spe;
       const myOpts: SpeedCalcOptions = { plusNature: myPlusNature, scarf: myScarf, speedStage: myStage };
@@ -75,6 +84,7 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
 
       return {
         opp,
+        oppSpeed: calcSpeed(oppBase, 252, oppOpts),
         ev0: ev(calcSpeed(oppBase, 0, oppOpts)),
         ev252Neutral: ev(calcSpeed(oppBase, 252, oppOpts)),
       };
@@ -87,7 +97,7 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
         <h3 className="font-display text-base font-semibold text-text-primary">
           Speed Tiers
         </h3>
-        <p className="font-mono text-xs text-text-muted mt-0.5">
+        <p className="font-body text-xs text-text-muted mt-0.5">
           All active Pokémon sorted by base speed
         </p>
       </div>
@@ -162,16 +172,16 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
           Speed Creep Calculator
         </h4>
 
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-4">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-4 relative">
           <div className="flex items-center gap-2">
-            <label className="font-mono text-xs text-text-muted">My Pokémon:</label>
+            <label className="font-body text-xs text-text-muted">My Pokémon:</label>
             <select
               value={selectedMyMon}
               onChange={(e) => setSelectedMyMon(e.target.value)}
               className="bg-surface-raised text-text-primary font-body text-xs rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-accent border border-surface-raised"
             >
               <option value="">— Select —</option>
-              {myTeam.map((p) => (
+              {[...myTeam].sort((a, b) => b.baseStats.spe - a.baseStats.spe).map((p) => (
                 <option key={p.id} value={p.name}>
                   {p.name} (base {p.baseStats.spe})
                 </option>
@@ -180,14 +190,14 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-text-muted">My:</span>
+            <span className="font-body text-xs text-text-muted">My:</span>
             <ToggleButton active={myScarf} onClick={() => setMyScarf((v) => !v)}>
               Scarf
             </ToggleButton>
             <ToggleButton active={myPlusNature} onClick={() => setMyPlusNature((v) => !v)}>
               +Spe
             </ToggleButton>
-            <label className="font-mono text-xs text-text-muted">Stage:</label>
+            <label className="font-body text-xs text-text-muted">Stage:</label>
             <input
               type="number"
               min={-6}
@@ -199,14 +209,14 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-text-muted">Opp:</span>
+            <span className="font-body text-xs text-text-muted">Opp:</span>
             <ToggleButton active={oppScarf} onClick={() => setOppScarf((v) => !v)}>
               Scarf
             </ToggleButton>
             <ToggleButton active={oppPlusNature} onClick={() => setOppPlusNature((v) => !v)}>
               +Spe
             </ToggleButton>
-            <label className="font-mono text-xs text-text-muted">Stage:</label>
+            <label className="font-body text-xs text-text-muted">Stage:</label>
             <input
               type="number"
               min={-6}
@@ -216,6 +226,13 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
               className="w-12 bg-surface-raised text-text-primary font-mono text-xs text-center rounded px-1 py-1 focus:outline-none focus:ring-1 focus:ring-accent border border-surface-raised/60"
             />
           </div>
+
+          {mySpeed !== null && (
+            <div className="ml-auto flex flex-col items-end">
+              <span className="font-body text-[10px] text-text-muted uppercase tracking-wide">My Spe @ 252</span>
+              <span className="font-mono text-xl font-bold text-accent leading-tight">{mySpeed}</span>
+            </div>
+          )}
         </div>
 
         {selectedMon && (
@@ -225,6 +242,7 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
                 <tr className="border-b border-surface-raised">
                   <th className="px-3 py-2 text-left font-mono text-xs text-text-muted">Opponent</th>
                   <th className="px-3 py-2 text-right font-mono text-xs text-text-muted">Base</th>
+                  <th className="px-3 py-2 text-right font-mono text-xs text-text-muted">Opp Spe</th>
                   <th className="px-3 py-2 text-right font-mono text-xs text-text-muted">Beat 0 EV</th>
                   <th className="px-3 py-2 text-right font-mono text-xs text-text-muted">Beat 252</th>
                 </tr>
@@ -248,6 +266,9 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
                     </td>
                     <td className="px-3 py-2 text-right font-mono text-xs text-text-secondary">
                       {row.opp.baseStats.spe}
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono text-xs font-semibold text-orange-400">
+                      {row.oppSpeed}
                     </td>
                     {[row.ev0, row.ev252Neutral].map((val, j) => (
                       <td key={j} className={`px-3 py-2 text-right font-mono text-xs ${

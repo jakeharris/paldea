@@ -204,7 +204,7 @@ export function DefensiveTypeChart({
         <h3 className="font-display text-base font-semibold text-text-primary">
           Defensive Type Chart
         </h3>
-        <p className="font-mono text-xs text-text-muted mt-0.5">
+        <p className="font-body text-xs text-text-muted mt-0.5">
           Net = weaknesses − resistances &amp; immunities
         </p>
       </div>
