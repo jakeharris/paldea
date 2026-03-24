@@ -2,7 +2,7 @@
 
 **Pokemon Assistant for League Draft Evaluation and Analysis**
 
-Live: https://paldea.jakeharris.dev
+Live: <https://paldea.jakeharris.dev>
 
 ---
 
@@ -14,25 +14,29 @@ The app is currently tailored to a specific draft league format but is designed 
 
 ## Features
 
-**League & Team Management**
+### League & Team Management
+
 - Create and configure leagues (generation, team size)
 - Add and rename teams; flag your own team
 - Search and draft Pokemon onto rosters
 - Toggle Tera Captain status per Pokemon
 
-**Side Panel Inspector**
+### Side Panel Inspector
+
 - Large sprite view with full base stat breakdown
 - Smogon tier and usage data (fetched live)
 - Team composition checklist (speed tiers, type immunities, hazard setters/clearers, pivot users, STAB priority, etc.)
 
-**Matchup Analysis**
-- Select an opponent team and exclude individual Pokemon from analysis
-- Defensive type chart — matrix of attacking types vs. your team's weaknesses/resistances, with net score per type
-- Coverage planner — select attacking types and see which opponents they hit super-effectively
-- Speed tier calculator — compare your team vs. opponents at EV 0 / EV 252 / EV 252 + Spe nature / +Scarf
-- Move category panel — browse learnable moves grouped by role (priority, pivot, setup, hazards, recovery, status, etc.)
+### Matchup Analysis
 
-**PWA**
+- Select an opponent team and exclude individual Pokemon from analysis
+- Defensive type chart — two per-team grids (rows = Pokémon, cols = 18 types) with a NET score row; NET cells have hover tooltips listing contributors by Critically Weak / Weak / Resistant / Deeply Resistant / Immune
+- Coverage planner — select attacking types and see best multiplier per opponent Pokémon; team renders immediately (faded) before a type is selected
+- Speed tier comparison — side-by-side sorted base speed lists plus a Speed Creep Calculator: choose your Pokémon, set scarf/stage for both sides (±6 stages), and see EVs needed to outspeed each opponent scenario (0 EV / 252 Neutral / 252 +Spe)
+- Move category panel — browse learnable moves grouped by role (Priority, Pivots, Setup, Hazards, Hazard Removal, Healing, Status, Terrain/Weather/Screens); Gen 9 learnsets only
+
+### PWA
+
 - Installable, offline-capable
 - Sprites and Smogon data cached aggressively for fast repeat loads
 
