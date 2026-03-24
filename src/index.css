@@ -1,0 +1,176 @@
+/* ──────────────────────────────────────────
+   Google Fonts (must precede other imports)
+   ────────────────────────────────────────── */
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Outfit:wght@100..900&display=swap");
+
+@import "tailwindcss";
+
+/* ──────────────────────────────────────────
+   Theme tokens
+   ────────────────────────────────────────── */
+@theme {
+  /* ── Fonts ── */
+  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "DM Sans", ui-monospace, monospace;
+
+  /* ── Mismagius Purples (primary) ── */
+  --color-purple-50: #f5e6ff;
+  --color-purple-100: #e0b3ff;
+  --color-purple-200: #c880ff;
+  --color-purple-300: #a94dff;
+  --color-purple-400: #8a1aff;
+  --color-purple-500: #6a0dad;
+  --color-purple-600: #5a0b93;
+  --color-purple-700: #4b0082;
+  --color-purple-800: #3a0066;
+  --color-purple-900: #29004a;
+  --color-purple-950: #1a0030;
+
+  /* ── Terapagos Blues (accent) ── */
+  --color-teal-50: #e6fdf8;
+  --color-teal-100: #b3f8ea;
+  --color-teal-200: #80f3dc;
+  --color-teal-300: #4deece;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
+  --color-sky-400: #38bdf8;
+  --color-sky-500: #0ea5e9;
+  --color-sky-600: #0284c7;
+
+  /* ── Warm Whites (text / surfaces) ── */
+  --color-warm-50: #fffdf9;
+  --color-warm-100: #fff8f0;
+  --color-warm-200: #faf5ef;
+  --color-warm-300: #f0ebe5;
+  --color-warm-400: #e6e1db;
+
+  /* ── Semantic aliases ── */
+  --color-surface: #1a0030;
+  --color-surface-raised: oklch(0.35 0.15 300 / 0.35);
+  --color-surface-overlay: oklch(0.25 0.15 300 / 0.55);
+  --color-accent: #2dd4bf;
+  --color-accent-sky: #0ea5e9;
+  --color-text-primary: #fff8f0;
+  --color-text-secondary: oklch(0.93 0.02 80 / 0.72);
+  --color-text-muted: oklch(0.93 0.02 80 / 0.48);
+
+  /* ── Blur / radius tokens ── */
+  --radius-card: 1rem;
+  --radius-pill: 9999px;
+  --blur-glass: 16px;
+}
+
+/* ──────────────────────────────────────────
+   Base styles
+   ────────────────────────────────────────── */
+body {
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  background: linear-gradient(
+    145deg,
+    #0a0014 0%,
+    #110022 40%,
+    var(--color-purple-950) 100%
+  );
+  min-height: 100dvh;
+}
+
+/* ──────────────────────────────────────────
+   Background sparkle effect
+   ────────────────────────────────────────── */
+@property --sparkle-x1 { syntax: "<percentage>"; inherits: false; initial-value: 15%; }
+@property --sparkle-y1 { syntax: "<percentage>"; inherits: false; initial-value: 20%; }
+@property --sparkle-x2 { syntax: "<percentage>"; inherits: false; initial-value: 72%; }
+@property --sparkle-y2 { syntax: "<percentage>"; inherits: false; initial-value: 35%; }
+@property --sparkle-x3 { syntax: "<percentage>"; inherits: false; initial-value: 40%; }
+@property --sparkle-y3 { syntax: "<percentage>"; inherits: false; initial-value: 75%; }
+
+#root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(1px 1px at var(--sparkle-x1) var(--sparkle-y1), oklch(0.95 0.05 280 / 0.7), transparent),
+    radial-gradient(1px 1px at 85% 15%, oklch(0.9 0.04 200 / 0.5), transparent),
+    radial-gradient(1px 1px at var(--sparkle-x2) var(--sparkle-y2), oklch(0.95 0.05 280 / 0.6), transparent),
+    radial-gradient(1px 1px at 28% 55%, oklch(0.85 0.04 200 / 0.4), transparent),
+    radial-gradient(1px 1px at var(--sparkle-x3) var(--sparkle-y3), oklch(0.95 0.05 280 / 0.55), transparent),
+    radial-gradient(1px 1px at 60% 90%, oklch(0.9 0.04 200 / 0.45), transparent),
+    radial-gradient(1px 1px at 92% 60%, oklch(0.95 0.05 280 / 0.5), transparent),
+    radial-gradient(1px 1px at 10% 85%, oklch(0.85 0.04 200 / 0.35), transparent),
+    radial-gradient(1.5px 1.5px at 50% 10%, oklch(0.95 0.06 280 / 0.65), transparent),
+    radial-gradient(1px 1px at 78% 80%, oklch(0.9 0.04 200 / 0.4), transparent);
+  animation: sparkle-drift 12s ease-in-out infinite alternate;
+}
+
+#root::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(1px 1px at 35% 12%, oklch(0.9 0.05 280 / 0.5), transparent),
+    radial-gradient(1px 1px at 65% 48%, oklch(0.85 0.04 200 / 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 20% 65%, oklch(0.95 0.06 280 / 0.55), transparent),
+    radial-gradient(1px 1px at 88% 42%, oklch(0.9 0.04 200 / 0.35), transparent),
+    radial-gradient(1px 1px at 55% 58%, oklch(0.95 0.05 280 / 0.45), transparent),
+    radial-gradient(1px 1px at 8% 38%, oklch(0.85 0.04 200 / 0.3), transparent),
+    radial-gradient(1px 1px at 45% 92%, oklch(0.9 0.05 280 / 0.5), transparent),
+    radial-gradient(1px 1px at 75% 8%, oklch(0.95 0.04 200 / 0.4), transparent);
+  animation: sparkle-fade 8s ease-in-out infinite alternate;
+}
+
+#root > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes sparkle-drift {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}
+
+@keyframes sparkle-fade {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.6; }
+}
+
+/* ──────────────────────────────────────────
+   Utility layers
+   ────────────────────────────────────────── */
+@utility glass {
+  background: var(--color-surface-raised);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  border: 1px solid oklch(0.93 0.02 80 / 0.08);
+}
+
+@utility glass-heavy {
+  background: var(--color-surface-overlay);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid oklch(0.93 0.02 80 / 0.12);
+}
+
+@utility gradient-accent {
+  background: linear-gradient(135deg, var(--color-teal-400), var(--color-sky-500));
+}
+
+@utility gradient-purple {
+  background: linear-gradient(135deg, var(--color-purple-500), var(--color-purple-700));
+}
+
+@utility text-gradient-accent {
+  background: linear-gradient(135deg, var(--color-teal-400), var(--color-sky-500));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
