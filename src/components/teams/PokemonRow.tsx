@@ -1,5 +1,5 @@
 import type { DraftPokemon } from "@/services/types";
-import { getIconUrl } from "@/services/pokemon-data";
+import { getIconUrl, getSpriteUrl } from "@/services/pokemon-data";
 
 interface PokemonRowProps {
   pokemon: DraftPokemon;
@@ -28,6 +28,7 @@ export function PokemonRow({ pokemon, onClick, onToggleTera, onRemove }: Pokemon
         alt={pokemon.name}
         className="w-10 h-10 object-contain shrink-0"
         loading="lazy"
+        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = getSpriteUrl(pokemon.name); }}
       />
 
       <div className="min-w-0 flex-1">

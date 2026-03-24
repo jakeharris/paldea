@@ -81,9 +81,9 @@ const moveIds = Object.keys(learnable).filter(id =>
 This applies in both `matchup-calc.ts` (move categorization) and `checklist.ts` (role validators). The `canLearn()` helper from `@pkmn/data` is **not safe** for gen-specific checks — use `getLearnable()` + prefix filtering instead. Failing to do this causes false positives (e.g. Latias showing Defog, Gliscor showing as a hazard clearer) because of moves learned in earlier gens.
 
 ### Sprite/icon URLs
-Use `sprites/dex/{id}.png` for both sprites and icons — this path covers all generations including Gen 9 and all alternate forms. `sprites/gen5/` only covers Gen 1–5 and will 404 for newer mons. Both `getSpriteUrl` and `getIconUrl` in `pokemon-data.ts` already use `dex/`.
+Icons use a two-tier strategy: `getIconUrl` returns `sprites/dex/{id}.png` (smaller files, primary), and components add an `onError` fallback to `getSpriteUrl` (`sprites/home/`) for Pokemon missing from `dex/`. `sprites/dex/` covers Gen 1–5 and many others but 404s on some Gen 8+ mons. `sprites/home/` covers all generations. `sprites/gen5/` only covers Gen 1–5.
 
-Form names keep their hyphen in sprite filenames: `toShowdownId("Ogerpon-Wellspring")` → `"ogerpon-wellspring"` → `sprites/dex/ogerpon-wellspring.png` ✓
+Form names keep their hyphen in sprite filenames: `toShowdownId("Ogerpon-Wellspring")` → `"ogerpon-wellspring"` → `sprites/home/ogerpon-wellspring.png` ✓
 
 ### localStorage safety in `LeagueProvider`
 The `useReducer` lazy initializer in `LeagueProvider` wraps the localStorage read in a `try/catch`. If **anything** inside the try throws, the catch returns `init` (empty state), and then `useEffect` immediately saves that empty state — wiping the user's data permanently.

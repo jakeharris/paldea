@@ -69,7 +69,7 @@ function toShowdownId(name: string): string {
 /** Construct Showdown dex sprite URL (120x120 PNG, always available) */
 export function getSpriteUrl(name: string): string {
   const id = toShowdownId(name);
-  return `https://play.pokemonshowdown.com/sprites/dex/${id}.png`;
+  return `https://play.pokemonshowdown.com/sprites/home/${id}.png`;
 }
 
 /** Construct Showdown animated sprite URL (GIF, may not exist for newer Pokemon) */

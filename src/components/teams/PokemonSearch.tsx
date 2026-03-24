@@ -1,6 +1,6 @@
 import { useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { usePokemonSearch } from "@/hooks/use-pokemon-search";
-import { getSpecies, getDexSpecies, toDraftPokemon, getIconUrl } from "@/services/pokemon-data";
+import { getSpecies, getDexSpecies, toDraftPokemon, getIconUrl, getSpriteUrl } from "@/services/pokemon-data";
 import type { DraftPokemon } from "@/services/types";
 import { TypeBadge } from "@/services/type-utils";
 
@@ -106,6 +106,7 @@ export const PokemonSearch = forwardRef<PokemonSearchHandle, PokemonSearchProps>
                     alt=""
                     className="w-8 h-8 object-contain"
                     loading="lazy"
+                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = getSpriteUrl(entry.name); }}
                   />
                   <span className="font-body font-medium">{entry.name}</span>
                   <span className="ml-auto flex gap-1">
