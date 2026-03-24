@@ -1,7 +1,7 @@
 import type { DraftPokemon } from "@/services/types";
 import { ALL_TYPES } from "@/services/matchup-calc";
 import { TYPE_COLORS } from "@/services/type-utils";
-import { generations } from "@/services/pokemon-data";
+import { generations, getSpriteUrl } from "@/services/pokemon-data";
 import { Tooltip } from "@/components/ui/Tooltip";
 
 interface DefensiveTypeChartProps {
@@ -139,6 +139,7 @@ function TeamChart({
                       src={p.icon}
                       alt={p.name}
                       className="w-5 h-5 [image-rendering:pixelated] shrink-0"
+                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = getSpriteUrl(p.name); }}
                     />
                     <span className="font-body text-text-secondary whitespace-nowrap">{p.name}</span>
                   </div>

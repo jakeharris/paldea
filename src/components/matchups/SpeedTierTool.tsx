@@ -5,6 +5,7 @@ import {
   minEvsToOutspeed,
   type SpeedCalcOptions,
 } from "@/services/matchup-calc";
+import { getSpriteUrl } from "@/services/pokemon-data";
 
 interface SpeedTierToolProps {
   myTeam: DraftPokemon[];
@@ -109,7 +110,7 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
                 <tr key={p.id} className={`border-b border-surface-raised/30 ${i % 2 === 0 ? "" : "bg-surface-raised/20"}`}>
                   <td className="px-3 py-1.5">
                     <div className="flex items-center gap-1.5">
-                      <img src={p.icon} alt={p.name} className="w-4 h-4 [image-rendering:pixelated]" />
+                      <img src={p.icon} alt={p.name} className="w-4 h-4 [image-rendering:pixelated]" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = getSpriteUrl(p.name); }} />
                       <span className="font-body text-text-secondary">{p.name}</span>
                     </div>
                   </td>
@@ -141,7 +142,7 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
                   <td className="px-3 py-1.5">
                     <div className="flex items-center justify-end gap-1.5">
                       <span className="font-body text-text-secondary">{p.name}</span>
-                      <img src={p.icon} alt={p.name} className="w-4 h-4 [image-rendering:pixelated]" />
+                      <img src={p.icon} alt={p.name} className="w-4 h-4 [image-rendering:pixelated]" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = getSpriteUrl(p.name); }} />
                     </div>
                   </td>
                 </tr>
@@ -234,6 +235,7 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
                           src={row.opp.icon}
                           alt={row.opp.name}
                           className="w-5 h-5 [image-rendering:pixelated]"
+                          onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = getSpriteUrl(row.opp.name); }}
                         />
                         <span className="font-body text-xs text-text-primary">{row.opp.name}</span>
                       </div>
