@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useLeagueDispatch } from "@/context/league-context";
 import { PokemonRow } from "./PokemonRow";
 import { PokemonSearch, type PokemonSearchHandle } from "./PokemonSearch";
@@ -14,7 +14,16 @@ export function TeamCard({ leagueId, team, teamSize }: TeamCardProps) {
   const dispatch = useLeagueDispatch();
   const searchRef = useRef<PokemonSearchHandle>(null);
   const [showSearch, setShowSearch] = useState(false);
+  const [copied, setCopied] = useState(false);
   const isFull = team.pokemon.length >= teamSize;
+
+  const handleShowdownExport = useCallback(() => {
+    const paste = team.pokemon.map((p) => p.name).join("\n\n");
+    navigator.clipboard.writeText(paste).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }, [team.pokemon]);
 
   useEffect(() => {
     if (showSearch) searchRef.current?.focus();
@@ -48,6 +57,15 @@ export function TeamCard({ leagueId, team, teamSize }: TeamCardProps) {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          {team.pokemon.length > 0 && (
+            <button
+              onClick={handleShowdownExport}
+              className="text-[11px] font-mono px-2 py-1 rounded-pill transition-colors text-text-muted hover:text-text-secondary hover:bg-surface-raised"
+              title="Copy Showdown paste"
+            >
+              {copied ? "Copied!" : "Export"}
+            </button>
+          )}
           {!isFull && (
             <button
               onClick={() => setShowSearch((s) => !s)}
