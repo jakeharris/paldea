@@ -23,6 +23,7 @@ const CATEGORIES: CategoryDef[] = [
   { key: "hazardClear", label: "Hazard Removal" },
   { key: "healing", label: "Healing" },
   { key: "status", label: "Status" },
+  { key: "disruption", label: "Disruption" },
   { key: "support", label: "Terrain, Weather & Screens" },
 ];
 

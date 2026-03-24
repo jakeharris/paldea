@@ -210,6 +210,7 @@ export interface AllMoveCategoryResults {
   hazardClear: MoveCategoryResult[];
   healing: MoveCategoryResult[];
   status: MoveCategoryResult[];
+  disruption: MoveCategoryResult[];
   support: MoveCategoryResult[];
 }
 
@@ -221,6 +222,13 @@ const HEALING_MOVES = new Set([
 const STATUS_VALUES = new Set(["par", "brn", "slp", "psn", "tox", "frz"]);
 
 const SCREEN_SIDE_CONDITIONS = new Set(["reflect", "lightscreen", "auroraveil"]);
+
+const DISRUPTION_MOVES = new Set([
+  "Taunt", "Encore", "Disable", "Torment",
+  "Trick", "Switcheroo",
+  "Whirlwind", "Roar", "Dragon Tail", "Circle Throw",
+  "Perish Song", "Haze", "Clear Smog", "Yawn",
+]);
 
 function toMoveId(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -237,6 +245,7 @@ export async function categorizeTeamMoves(
   const pivotMoveIds = new Set(PIVOT_MOVES.map(toMoveId));
   const priorityMoveIds = new Set(PRIORITY_MOVES.map(toMoveId));
   const healingMoveIds = new Set([...HEALING_MOVES].map(toMoveId));
+  const disruptionMoveIds = new Set([...DISRUPTION_MOVES].map(toMoveId));
 
   const learnsets = await Promise.all(
     team.map((p) => getLearnable(p.name, gen))
@@ -250,6 +259,7 @@ export async function categorizeTeamMoves(
     hazardClear: [],
     healing: [],
     status: [],
+    disruption: [],
     support: [],
   };
 
@@ -271,6 +281,7 @@ export async function categorizeTeamMoves(
     const supportMoves: string[] = [];
     const healingMovesList: string[] = [];
     const statusMoves: string[] = [];
+    const disruptionMoves: string[] = [];
 
     for (const moveId of moveIds) {
       const moveData = generation.moves.get(moveId);
@@ -319,6 +330,11 @@ export async function categorizeTeamMoves(
         statusMoves.push(moveName);
       }
 
+      // Disruption — anti-setup and option-limiting moves
+      if (disruptionMoveIds.has(moveId)) {
+        disruptionMoves.push(moveName);
+      }
+
       // Support — weather, terrain, screens
       if (
         moveData.weather ||
@@ -342,6 +358,7 @@ export async function categorizeTeamMoves(
     if (hazardClearMoves.length > 0) result.hazardClear.push(entry(hazardClearMoves));
     if (healingMovesList.length > 0) result.healing.push(entry(healingMovesList));
     if (statusMoves.length > 0) result.status.push(entry(statusMoves));
+    if (disruptionMoves.length > 0) result.disruption.push(entry(disruptionMoves));
     if (supportMoves.length > 0) result.support.push(entry(supportMoves));
   }
 
