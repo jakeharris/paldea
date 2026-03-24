@@ -43,7 +43,7 @@ export function TeamsPage() {
             <button
               onClick={() => setShowCreateLeague(true)}
               className="gradient-accent text-purple-950 font-body font-semibold
-                         px-5 py-2.5 rounded-pill hover:opacity-90 transition-opacity"
+                         px-5 py-2.5 rounded-pill hover:opacity-90 transition-opacity cursor-pointer"
             >
               Create League
             </button>
@@ -88,13 +88,13 @@ export function TeamsPage() {
               </label>
               <button
                 onClick={createLeague}
-                className="text-xs font-mono text-accent hover:text-teal-300 transition-colors"
+                className="text-xs font-mono text-accent hover:text-teal-300 transition-colors cursor-pointer"
               >
                 Create
               </button>
               <button
                 onClick={() => setShowCreateLeague(false)}
-                className="text-xs font-mono text-text-muted hover:text-text-secondary transition-colors"
+                className="text-xs font-mono text-text-muted hover:text-text-secondary transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -105,7 +105,7 @@ export function TeamsPage() {
             <button
               onClick={() => setShowCreateLeague(true)}
               className="mt-2 text-xs font-mono text-text-muted hover:text-text-secondary
-                         transition-colors"
+                         transition-colors cursor-pointer"
             >
               + Create League
             </button>
