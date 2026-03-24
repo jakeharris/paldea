@@ -7,6 +7,7 @@ import {
   type Dispatch,
 } from "react";
 import type { League, DraftTeam, DraftPokemon } from "@/services/types";
+import { getIconUrl, getSpriteUrl } from "@/services/pokemon-data";
 
 // ── State ──
 
@@ -189,6 +190,20 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const leagues = JSON.parse(stored) as League[];
+        // Re-derive icon/sprite URLs so they always use the current format.
+        // Done in a separate try so a refresh failure never loses the stored data.
+        try {
+          for (const league of leagues) {
+            for (const team of league.teams) {
+              for (const mon of team.pokemon) {
+                mon.icon = getIconUrl(mon.name);
+                mon.sprite = getSpriteUrl(mon.name);
+              }
+            }
+          }
+        } catch {
+          // URL refresh failed — proceed with stored URLs rather than losing data
+        }
         return { ...init, leagues };
       }
     } catch {

@@ -81,7 +81,7 @@ export function getAnimatedSpriteUrl(name: string): string {
 /** Construct Showdown icon URL */
 export function getIconUrl(name: string): string {
   const id = toShowdownId(name);
-  return `https://play.pokemonshowdown.com/sprites/gen5/${id}.png`;
+  return `https://play.pokemonshowdown.com/sprites/dex/${id}.png`;
 }
 
 /** Common shape between @pkmn/data Specie and raw Dex Species */

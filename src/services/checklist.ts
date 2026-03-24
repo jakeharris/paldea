@@ -1,5 +1,5 @@
 import type { DraftPokemon, ChecklistItem } from "./types";
-import { canLearn, generations } from "./pokemon-data";
+import { getLearnable, generations } from "./pokemon-data";
 
 // ── Sync checks ──
 
@@ -98,16 +98,16 @@ export function checkSpinBlocker(team: DraftPokemon[]): ChecklistItem {
 
 // ── Async checks (need learnset data) ──
 
-const HAZARD_MOVES = ["Stealth Rock", "Spikes", "Toxic Spikes", "Sticky Web"];
-const CLEAR_MOVES = ["Rapid Spin", "Defog"];
-const PIVOT_MOVES = [
+export const HAZARD_MOVES = ["Stealth Rock", "Spikes", "Toxic Spikes", "Sticky Web"];
+export const CLEAR_MOVES = ["Rapid Spin", "Defog"];
+export const PIVOT_MOVES = [
   "U-turn",
   "Volt Switch",
   "Flip Turn",
   "Teleport",
   "Parting Shot",
 ];
-const PRIORITY_MOVES = [
+export const PRIORITY_MOVES = [
   "Aqua Jet",
   "Bullet Punch",
   "Extreme Speed",
@@ -124,19 +124,26 @@ const PRIORITY_MOVES = [
   "First Impression",
 ];
 
+function toMoveId(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 async function checkMoveList(
   team: DraftPokemon[],
   moves: string[],
   gen: number,
 ): Promise<string[]> {
+  const genPrefix = String(gen);
+  const moveIds = new Set(moves.map(toMoveId));
   const contributors: string[] = [];
   for (const p of team) {
-    for (const move of moves) {
-      if (await canLearn(p.name, move, gen)) {
-        contributors.push(p.name);
-        break;
-      }
-    }
+    const learnable = await getLearnable(p.name, gen);
+    if (!learnable) continue;
+    const hasMove = Object.entries(learnable).some(
+      ([id, methods]) =>
+        moveIds.has(id) && methods.some((m) => m.startsWith(genPrefix)),
+    );
+    if (hasMove) contributors.push(p.name);
   }
   return contributors;
 }
@@ -184,13 +191,18 @@ export async function checkSTABPriority(
   team: DraftPokemon[],
   gen: number = 9,
 ): Promise<ChecklistItem> {
+  const genPrefix = String(gen);
   const generation = generations.get(gen);
   const contributors: string[] = [];
 
   for (const p of team) {
+    const learnable = await getLearnable(p.name, gen);
+    if (!learnable) continue;
     let hasStabPriority = false;
     for (const moveName of PRIORITY_MOVES) {
-      if (!(await canLearn(p.name, moveName, gen))) continue;
+      const moveId = toMoveId(moveName);
+      const methods = learnable[moveId];
+      if (!methods?.some((m) => m.startsWith(genPrefix))) continue;
       const move = generation.moves.get(moveName);
       if (move && p.types.includes(move.type as string)) {
         hasStabPriority = true;
