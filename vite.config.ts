@@ -37,6 +37,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MB — @pkmn learnset data is ~3 MB
         globPatterns: ["**/*.{js,css,html,png,svg,woff2}"],
         runtimeCaching: [
           {
@@ -50,10 +51,41 @@ export default defineConfig({
               },
             },
           },
+          {
+            urlPattern: /^https:\/\/play\.pokemonshowdown\.com\/sprites\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "showdown-sprites",
+              expiration: {
+                maxEntries: 500,
+                maxAgeSeconds: 60 * 60 * 24 * 30,
+              },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/data\.pkmn\.cc\/.*/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "smogon-data",
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 7,
+              },
+            },
+          },
         ],
       },
     }),
   ],
+  server: {
+    proxy: {
+      "/api/smogon": {
+        target: "https://www.smogon.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/smogon/, ""),
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": resolve(__dirname, "src"),

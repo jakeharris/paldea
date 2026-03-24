@@ -1,5 +1,6 @@
-import { AppShell } from "@/components/AppShell";
+import { RouterProvider } from "react-router";
+import { router } from "./router";
 
 export function App() {
-  return <AppShell />;
+  return <RouterProvider router={router} />;
 }
