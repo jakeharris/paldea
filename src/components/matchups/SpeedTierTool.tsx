@@ -41,8 +41,10 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
   const [selectedMyMon, setSelectedMyMon] = useState<string>("");
   const [oppScarf, setOppScarf] = useState(false);
   const [oppStage, setOppStage] = useState(0);
+  const [oppPlusNature, setOppPlusNature] = useState(false);
   const [myScarf, setMyScarf] = useState(false);
   const [myStage, setMyStage] = useState(0);
+  const [myPlusNature, setMyPlusNature] = useState(false);
 
   const selectedMon = useMemo(
     () => myTeam.find((p) => p.name === selectedMyMon) ?? null,
@@ -54,7 +56,7 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
     return oppTeam.map((opp) => {
       const base = selectedMon.baseStats.spe;
       const oppBase = opp.baseStats.spe;
-      const myOpts: SpeedCalcOptions = { plusNature: false, scarf: myScarf, speedStage: myStage };
+      const myOpts: SpeedCalcOptions = { plusNature: myPlusNature, scarf: myScarf, speedStage: myStage };
 
       function ev(target: number): string {
         const result = minEvsToOutspeed(base, target, myOpts);
@@ -65,20 +67,19 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
         return String(result);
       }
 
-      const oppOpts = (plusNature: boolean): SpeedCalcOptions => ({
-        plusNature,
+      const oppOpts: SpeedCalcOptions = {
+        plusNature: oppPlusNature,
         scarf: oppScarf,
         speedStage: oppStage,
-      });
+      };
 
       return {
         opp,
-        ev0: ev(calcSpeed(oppBase, 0, oppOpts(false))),
-        ev252Neutral: ev(calcSpeed(oppBase, 252, oppOpts(false))),
-        ev252Plus: ev(calcSpeed(oppBase, 252, oppOpts(true))),
+        ev0: ev(calcSpeed(oppBase, 0, oppOpts)),
+        ev252Neutral: ev(calcSpeed(oppBase, 252, oppOpts)),
       };
     });
-  }, [selectedMon, oppTeam, oppScarf, oppStage, myScarf, myStage]);
+  }, [selectedMon, oppTeam, oppScarf, oppStage, oppPlusNature, myScarf, myStage, myPlusNature]);
 
   return (
     <div className="glass rounded-card overflow-hidden">
@@ -183,6 +184,9 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
             <ToggleButton active={myScarf} onClick={() => setMyScarf((v) => !v)}>
               Scarf
             </ToggleButton>
+            <ToggleButton active={myPlusNature} onClick={() => setMyPlusNature((v) => !v)}>
+              +Spe
+            </ToggleButton>
             <label className="font-mono text-xs text-text-muted">Stage:</label>
             <input
               type="number"
@@ -198,6 +202,9 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
             <span className="font-mono text-xs text-text-muted">Opp:</span>
             <ToggleButton active={oppScarf} onClick={() => setOppScarf((v) => !v)}>
               Scarf
+            </ToggleButton>
+            <ToggleButton active={oppPlusNature} onClick={() => setOppPlusNature((v) => !v)}>
+              +Spe
             </ToggleButton>
             <label className="font-mono text-xs text-text-muted">Stage:</label>
             <input
@@ -219,8 +226,7 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
                   <th className="px-3 py-2 text-left font-mono text-xs text-text-muted">Opponent</th>
                   <th className="px-3 py-2 text-right font-mono text-xs text-text-muted">Base</th>
                   <th className="px-3 py-2 text-right font-mono text-xs text-text-muted">Beat 0 EV</th>
-                  <th className="px-3 py-2 text-right font-mono text-xs text-text-muted">Beat 252 Neu</th>
-                  <th className="px-3 py-2 text-right font-mono text-xs text-text-muted">Beat 252 +Spe</th>
+                  <th className="px-3 py-2 text-right font-mono text-xs text-text-muted">Beat 252</th>
                 </tr>
               </thead>
               <tbody>
@@ -243,7 +249,7 @@ export function SpeedTierTool({ myTeam, oppTeam, myTeamName, oppTeamName }: Spee
                     <td className="px-3 py-2 text-right font-mono text-xs text-text-secondary">
                       {row.opp.baseStats.spe}
                     </td>
-                    {[row.ev0, row.ev252Neutral, row.ev252Plus].map((val, j) => (
+                    {[row.ev0, row.ev252Neutral].map((val, j) => (
                       <td key={j} className={`px-3 py-2 text-right font-mono text-xs ${
                         val === "Can't" ? "text-red-400" : val === "0" ? "text-green-400" : "text-text-muted"
                       }`}>
