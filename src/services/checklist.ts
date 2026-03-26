@@ -96,6 +96,41 @@ export function checkSpinBlocker(team: DraftPokemon[]): ChecklistItem {
   };
 }
 
+export function checkBulkyWater(team: DraftPokemon[]): ChecklistItem {
+  const contributors = team
+    .filter(
+      (p) =>
+        p.types.includes("Water") &&
+        p.baseStats.hp + p.baseStats.def + p.baseStats.spd >= 260,
+    )
+    .map((p) => p.name);
+  return {
+    id: "bulky-water",
+    label: "1 bulky Water",
+    met: contributors.length >= 1,
+    contributors,
+  };
+}
+
+export function checkGroundedPoison(team: DraftPokemon[]): ChecklistItem {
+  const contributors = team
+    .filter(
+      (p) =>
+        p.types.includes("Poison") &&
+        !p.types.includes("Flying") &&
+        p.abilities.primary !== "Levitate" &&
+        !(p.abilities.secondary && p.abilities.secondary === "Levitate") &&
+        !(p.abilities.hidden && p.abilities.hidden === "Levitate"),
+    )
+    .map((p) => p.name);
+  return {
+    id: "grounded-poison",
+    label: "1 grounded Poison (clears TSpikes)",
+    met: contributors.length >= 1,
+    contributors,
+  };
+}
+
 // ── Async checks (need learnset data) ──
 
 export const HAZARD_MOVES = ["Stealth Rock", "Spikes", "Toxic Spikes", "Sticky Web"];
@@ -220,6 +255,46 @@ export async function checkSTABPriority(
   };
 }
 
+export async function checkKnockOffUser(
+  team: DraftPokemon[],
+  gen: number = 9,
+): Promise<ChecklistItem> {
+  const contributors = await checkMoveList(team, ["Knock Off"], gen);
+  return {
+    id: "knock-off-user",
+    label: "1+ Knock Off user",
+    met: contributors.length >= 1,
+    contributors,
+  };
+}
+
+export async function checkFastDisruptor(
+  team: DraftPokemon[],
+  gen: number = 9,
+): Promise<ChecklistItem> {
+  const genPrefix = String(gen);
+  const disruptMoveIds = new Set(["taunt", "encore"]);
+  const contributors: string[] = [];
+
+  for (const p of team) {
+    if (p.baseStats.spe < 110) continue;
+    const learnable = await getLearnable(p.name, gen);
+    if (!learnable) continue;
+    const hasMove = Object.entries(learnable).some(
+      ([id, methods]) =>
+        disruptMoveIds.has(id) && methods.some((m) => m.startsWith(genPrefix)),
+    );
+    if (hasMove) contributors.push(p.name);
+  }
+
+  return {
+    id: "fast-disruptor",
+    label: "1 fast Taunt/Encore (110+ Spe)",
+    met: contributors.length >= 1,
+    contributors,
+  };
+}
+
 // ── Aggregate ──
 
 /** Run all sync checks */
@@ -230,6 +305,8 @@ export function runSyncChecks(team: DraftPokemon[]): ChecklistItem[] {
     checkElectricImmunity(team),
     checkTypeCore(team),
     checkSpinBlocker(team),
+    checkBulkyWater(team),
+    checkGroundedPoison(team),
   ];
 }
 
@@ -243,5 +320,7 @@ export async function runAsyncChecks(
     checkHazardClearer(team, gen),
     checkPivotUsers(team, gen),
     checkSTABPriority(team, gen),
+    checkKnockOffUser(team, gen),
+    checkFastDisruptor(team, gen),
   ]);
 }
