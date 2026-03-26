@@ -14,10 +14,12 @@ interface MatchupHeroProps {
 function PokemonSprite({
   name,
   excluded,
+  isTeraCaptain,
   onToggle,
 }: {
   name: string;
   excluded: boolean;
+  isTeraCaptain: boolean;
   onToggle: () => void;
 }) {
   const [useAnimated, setUseAnimated] = useState(true);
@@ -54,6 +56,11 @@ function PokemonSprite({
       >
         {name}
       </span>
+      {isTeraCaptain && (
+        <span className="text-[9px] font-mono font-bold px-1 py-0.5 rounded bg-accent/20 text-accent leading-none">
+          TERA
+        </span>
+      )}
     </div>
   );
 }
@@ -86,6 +93,7 @@ export function MatchupHero({
                 key={p.id}
                 name={p.name}
                 excluded={excludedMyIds.has(i)}
+                isTeraCaptain={p.isTeraCaptain}
                 onToggle={() => onToggleMyExclusion(i)}
               />
             ))}
@@ -113,6 +121,7 @@ export function MatchupHero({
                 key={p.id}
                 name={p.name}
                 excluded={excludedOppIds.has(i)}
+                isTeraCaptain={p.isTeraCaptain}
                 onToggle={() => onToggleOppExclusion(i)}
               />
             ))}
