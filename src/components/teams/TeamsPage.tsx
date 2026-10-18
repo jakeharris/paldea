@@ -34,7 +34,7 @@ export function TeamsPage() {
 
   return (
     <div className="flex gap-6 h-full">
-      <div className={`flex-1 min-w-0 ${selected ? "max-w-[calc(100%-420px)]" : ""}`}>
+      <div className={`flex-1 min-w-0 ${selected ? "lg:max-w-[calc(100%-420px)]" : ""}`}>
         {/* League sections */}
         {state.leagues.length === 0 && !showCreateLeague ? (
           <div className="glass rounded-card p-8 text-center">
