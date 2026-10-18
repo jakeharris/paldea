@@ -15,6 +15,10 @@ export function TeamsPage() {
   const [showCreateLeague, setShowCreateLeague] = useState(false);
   const [newLeagueName, setNewLeagueName] = useState("");
   const [newLeagueSize, setNewLeagueSize] = useState(10);
+  const [showArchived, setShowArchived] = useState(false);
+
+  const activeLeagues = state.leagues.filter((l) => !l.archived);
+  const archivedLeagues = state.leagues.filter((l) => l.archived);
 
   function createLeague() {
     if (!newLeagueName.trim()) return;
@@ -50,7 +54,7 @@ export function TeamsPage() {
           </div>
         ) : (
           <>
-            {state.leagues.map((league) => (
+            {activeLeagues.map((league) => (
               <LeagueSection key={league.id} league={league} />
             ))}
           </>
@@ -110,6 +114,27 @@ export function TeamsPage() {
               + Create League
             </button>
           )
+        )}
+
+        {/* Archived leagues */}
+        {archivedLeagues.length > 0 && (
+          <div className="mt-8 pt-4 border-t border-white/5">
+            <button
+              onClick={() => setShowArchived((v) => !v)}
+              className="text-xs font-mono text-text-muted hover:text-text-secondary
+                         transition-colors cursor-pointer mb-3"
+              aria-expanded={showArchived}
+            >
+              {showArchived ? "▾" : "▸"} Archived ({archivedLeagues.length})
+            </button>
+            {showArchived && (
+              <div className="opacity-80">
+                {archivedLeagues.map((league) => (
+                  <LeagueSection key={league.id} league={league} />
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
 

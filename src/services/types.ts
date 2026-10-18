@@ -43,6 +43,10 @@ export interface League {
   format: string;
   teamSize: number;
   teams: DraftTeam[];
+  /** Archived leagues are hidden from the main list and never auto-selected */
+  archived?: boolean;
+  /** UI: whether the league's teams are folded away on the Teams page */
+  collapsed?: boolean;
 }
 
 /** A single item in the team composition checklist */
