@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router";
-import { useLeagueState } from "@/context/league-context";
+import { useActiveLeague } from "@/context/league-context";
 import { MatchupHero } from "@/components/matchups/MatchupHero";
 import { DefensiveTypeChart } from "@/components/matchups/DefensiveTypeChart";
 import { SpeedTierTool } from "@/components/matchups/SpeedTierTool";
@@ -9,20 +9,13 @@ import { CoveragePlanner } from "@/components/matchups/CoveragePlanner";
 import { useMatchupMoves } from "@/hooks/use-matchup-moves";
 
 export function MatchupsPage() {
-  const state = useLeagueState();
 
   const [opponentTeamId, setOpponentTeamId] = useState<string | null>(null);
   const [excludedMyIds, setExcludedMyIds] = useState<Set<number>>(new Set());
   const [excludedOppIds, setExcludedOppIds] = useState<Set<number>>(new Set());
   const [coverageTypes, setCoverageTypes] = useState<Set<string>>(new Set());
 
-  const league = useMemo(
-    () =>
-      state.leagues.find((l) => l.id === state.selectedLeagueId) ??
-      state.leagues[0] ??
-      null,
-    [state.leagues, state.selectedLeagueId],
-  );
+  const league = useActiveLeague();
 
   const myTeam = useMemo(
     () => league?.teams.find((t) => t.isMyTeam) ?? null,

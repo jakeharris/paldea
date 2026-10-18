@@ -17,7 +17,11 @@ export function LeagueSection({ league }: LeagueSectionProps) {
 
   function saveName() {
     if (editName.trim()) {
-      dispatch({ type: "RENAME_LEAGUE", leagueId: league.id, name: editName.trim() });
+      dispatch({
+        type: "RENAME_LEAGUE",
+        leagueId: league.id,
+        name: editName.trim(),
+      });
     }
     setIsEditing(false);
   }
@@ -37,7 +41,23 @@ export function LeagueSection({ league }: LeagueSectionProps) {
 
   return (
     <section className="mb-6">
-      <div className="flex items-center gap-3 mb-3">
+      <div
+        className={`flex items-center gap-3 ${league.collapsed ? "" : "mb-3"}`}
+      >
+        <button
+          onClick={() =>
+            dispatch({ type: "TOGGLE_LEAGUE_COLLAPSED", leagueId: league.id })
+          }
+          className="text-text-muted hover:text-text-secondary transition-colors text-xs w-3 cursor-pointer"
+          title={league.collapsed ? "Expand league" : "Collapse league"}
+          aria-expanded={!league.collapsed}
+        >
+          <span
+            className={`inline-block transition-transform ${league.collapsed ? "" : "rotate-90"}`}
+          >
+            ▸
+          </span>
+        </button>
         {isEditing ? (
           <input
             autoFocus
@@ -63,68 +83,98 @@ export function LeagueSection({ league }: LeagueSectionProps) {
         )}
         <span className="text-[10px] font-mono text-text-muted">
           Gen {league.generation} · {league.teamSize} slots
+          {league.collapsed && ` · ${league.teams.length} teams`}
         </span>
         <button
-          onClick={() => dispatch({ type: "DELETE_LEAGUE", leagueId: league.id })}
-          className="text-text-muted hover:text-red-400 transition-colors text-xs ml-auto"
+          onClick={() =>
+            dispatch({
+              type: "SET_LEAGUE_ARCHIVED",
+              leagueId: league.id,
+              archived: !league.archived,
+            })
+          }
+          className="text-text-muted hover:text-text-secondary transition-colors text-xs ml-auto cursor-pointer"
+          title={
+            league.archived
+              ? "Move back to active leagues"
+              : "Hide this league under Archived"
+          }
+        >
+          {league.archived ? "Unarchive" : "Archive"}
+        </button>
+        <button
+          onClick={() => {
+            if (
+              window.confirm(
+                `Delete "${league.name}" and all its teams? This can't be undone.`,
+              )
+            ) {
+              dispatch({ type: "DELETE_LEAGUE", leagueId: league.id });
+            }
+          }}
+          className="text-text-muted hover:text-red-400 transition-colors text-xs cursor-pointer"
           title="Delete league"
         >
           Delete
         </button>
       </div>
 
-      <div className="flex flex-col gap-4 ml-0">
-        {league.teams.map((team) => (
-          <TeamCard
-            key={team.id}
-            leagueId={league.id}
-            team={team}
-            teamSize={league.teamSize}
-          />
-        ))}
-      </div>
+      {!league.collapsed && (
+        <>
+          <div className="flex flex-col gap-4 ml-0">
+            {league.teams.map((team) => (
+              <TeamCard
+                key={team.id}
+                leagueId={league.id}
+                team={team}
+                teamSize={league.teamSize}
+              />
+            ))}
+          </div>
 
-      {showAddTeam ? (
-        <div className="mt-3 glass rounded-card p-3 flex items-center gap-3">
-          <input
-            autoFocus
-            value={newTeamName}
-            onChange={(e) => setNewTeamName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addTeam()}
-            placeholder="Player name..."
-            className="flex-1 bg-transparent text-sm text-text-primary
+          {showAddTeam ? (
+            <div className="mt-3 glass rounded-card p-3 flex items-center gap-3">
+              <input
+                autoFocus
+                value={newTeamName}
+                onChange={(e) => setNewTeamName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addTeam()}
+                placeholder="Player name..."
+                className="flex-1 bg-transparent text-sm text-text-primary
                        placeholder:text-text-muted focus:outline-none font-body"
-          />
-          <label className="flex items-center gap-1 text-[11px] font-mono text-text-muted shrink-0">
-            <input
-              type="checkbox"
-              checked={isMyTeam}
-              onChange={(e) => setIsMyTeam(e.target.checked)}
-              className="accent-accent w-3.5 h-3.5"
-            />
-            My team
-          </label>
-          <button
-            onClick={addTeam}
-            className="text-xs font-mono text-accent hover:text-teal-300 transition-colors"
-          >
-            Add
-          </button>
-          <button
-            onClick={() => setShowAddTeam(false)}
-            className="text-xs font-mono text-text-muted hover:text-text-secondary transition-colors"
-          >
-            Cancel
-          </button>
-        </div>
-      ) : (
-        <button
-          onClick={() => setShowAddTeam(true)}
-          className="mt-3 text-xs font-mono text-text-muted hover:text-text-secondary
+              />
+              <label className="flex items-center gap-1 text-[11px] font-mono text-text-muted shrink-0">
+                <input
+                  type="checkbox"
+                  checked={isMyTeam}
+                  onChange={(e) => setIsMyTeam(e.target.checked)}
+                  className="accent-accent w-3.5 h-3.5"
+                />
+                My team
+              </label>
+              <button
+                onClick={addTeam}
+                className="text-xs font-mono text-accent hover:text-teal-300 transition-colors"
+              >
+                Add
+              </button>
+              <button
+                onClick={() => setShowAddTeam(false)}
+                className="text-xs font-mono text-text-muted hover:text-text-secondary transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAddTeam(true)}
+              className="mt-3 text-xs font-mono text-text-muted hover:text-text-secondary
                      transition-colors"
-        >
-          + Add Team
-        </button>
+            >
+              + Add Team
+            </button>
+          )}
+        </>
       )}
     </section>
   );

@@ -3,6 +3,7 @@ import {
   useContext,
   useReducer,
   useEffect,
+  useMemo,
   type ReactNode,
   type Dispatch,
 } from "react";
@@ -32,6 +33,8 @@ type Action =
   | { type: "CREATE_LEAGUE"; name: string; generation?: number; teamSize?: number }
   | { type: "DELETE_LEAGUE"; leagueId: string }
   | { type: "RENAME_LEAGUE"; leagueId: string; name: string }
+  | { type: "SET_LEAGUE_ARCHIVED"; leagueId: string; archived: boolean }
+  | { type: "TOGGLE_LEAGUE_COLLAPSED"; leagueId: string }
   | { type: "ADD_TEAM"; leagueId: string; playerName: string; isMyTeam: boolean }
   | { type: "REMOVE_TEAM"; leagueId: string; teamId: string }
   | { type: "ADD_POKEMON"; leagueId: string; teamId: string; pokemon: DraftPokemon }
@@ -102,6 +105,23 @@ function leagueReducer(state: LeagueState, action: Action): LeagueState {
       return mapLeague(state, action.leagueId, (l) => ({
         ...l,
         name: action.name,
+      }));
+
+    case "SET_LEAGUE_ARCHIVED": {
+      const next = mapLeague(state, action.leagueId, (l) => ({
+        ...l,
+        archived: action.archived,
+        collapsed: action.archived,
+      }));
+      return action.archived && state.selectedLeagueId === action.leagueId
+        ? { ...next, selectedLeagueId: null, selectedTeamId: null, selectedPokemonIndex: null }
+        : next;
+    }
+
+    case "TOGGLE_LEAGUE_COLLAPSED":
+      return mapLeague(state, action.leagueId, (l) => ({
+        ...l,
+        collapsed: !l.collapsed,
       }));
 
     case "ADD_TEAM": {
@@ -231,6 +251,18 @@ export function useLeagueState() {
 
 export function useLeagueDispatch() {
   return useContext(LeagueDispatchContext);
+}
+
+/** The league pages should operate on: the selected one, else the first non-archived league */
+export function useActiveLeague(): League | null {
+  const { leagues, selectedLeagueId } = useLeagueState();
+  return useMemo(
+    () =>
+      leagues.find((l) => l.id === selectedLeagueId && !l.archived) ??
+      leagues.find((l) => !l.archived) ??
+      null,
+    [leagues, selectedLeagueId],
+  );
 }
 
 /** Convenience: get the currently selected pokemon and its team/league */

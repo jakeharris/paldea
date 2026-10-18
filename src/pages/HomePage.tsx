@@ -1,20 +1,13 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router";
-import { useLeagueState } from "@/context/league-context";
+import { useActiveLeague } from "@/context/league-context";
 import { MatchupHero } from "@/components/matchups/MatchupHero";
 
 export function HomePage() {
-  const state = useLeagueState();
   const [excludedMyIds, setExcludedMyIds] = useState<Set<number>>(new Set());
   const [excludedOppIds, setExcludedOppIds] = useState<Set<number>>(new Set());
 
-  const league = useMemo(
-    () =>
-      state.leagues.find((l) => l.id === state.selectedLeagueId) ??
-      state.leagues[0] ??
-      null,
-    [state.leagues, state.selectedLeagueId],
-  );
+  const league = useActiveLeague();
 
   const myTeam = useMemo(
     () => league?.teams.find((t) => t.isMyTeam) ?? null,
