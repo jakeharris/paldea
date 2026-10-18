@@ -1,8 +1,10 @@
 /** Smogon draft analysis service.
  *
- *  Fetches the Smogon dex page for each Pokemon and extracts the Draft
- *  strategy from the inline `dexSettings` JSON blob. A Vite dev-server
- *  proxy (`/api/smogon`) is used to avoid CORS issues.
+ *  Calls Smogon's `dump-pokemon` dex RPC (the same request smogon.com's dex
+ *  page makes) and extracts the Draft strategy. The request goes through
+ *  `/api/smogon` to avoid CORS: a Vite proxy in dev, and a `vercel.json`
+ *  rewrite in production. Results are cached in memory and persisted via the
+ *  Cache API.
  */
 
 export interface DraftAnalysis {
@@ -53,6 +55,58 @@ function extractSummary(overviewHtml: string): string {
 
 const cache = new Map<string, DraftAnalysis | null>();
 
+// ── Persistent cache ──
+// Results are stored via the Cache API so a Pokemon isn't re-fetched from
+// Smogon on every app load. Misses expire sooner in case an analysis is added.
+const PERSIST_CACHE_NAME = "smogon-draft-analyses";
+const HIT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const MISS_TTL_MS = 24 * 60 * 60 * 1000;
+
+interface PersistedEntry {
+  analysis: DraftAnalysis | null;
+  fetchedAt: number;
+}
+
+function persistKey(genSlug: string, slug: string): string {
+  return `/__smogon-cache/${genSlug}/${slug}`;
+}
+
+async function readPersisted(key: string): Promise<PersistedEntry | undefined> {
+  if (typeof caches === "undefined") return undefined;
+  try {
+    const store = await caches.open(PERSIST_CACHE_NAME);
+    const resp = await store.match(key);
+    if (!resp) return undefined;
+    const entry = (await resp.json()) as PersistedEntry;
+    const ttl = entry.analysis ? HIT_TTL_MS : MISS_TTL_MS;
+    if (Date.now() - entry.fetchedAt > ttl) {
+      await store.delete(key);
+      return undefined;
+    }
+    return entry;
+  } catch {
+    return undefined;
+  }
+}
+
+async function writePersisted(key: string, analysis: DraftAnalysis | null): Promise<void> {
+  if (typeof caches === "undefined") return;
+  try {
+    const store = await caches.open(PERSIST_CACHE_NAME);
+    const entry: PersistedEntry = { analysis, fetchedAt: Date.now() };
+    await store.put(
+      key,
+      new Response(JSON.stringify(entry), { headers: { "Content-Type": "application/json" } }),
+    );
+  } catch {
+    /* persistence is best-effort */
+  }
+}
+
+interface DumpPokemonResponse {
+  strategies?: { format: string; overview?: string }[];
+}
+
 /**
  * Fetch draft analysis for a Pokemon from Smogon.
  * Returns a summary (first paragraph) and a link to the full page.
@@ -67,57 +121,41 @@ export async function fetchDraftAnalysis(
   const smogonUrl = getSmogonUrl(pokemonName, gen);
   const slug = toSmogonSlug(pokemonName);
   const genSlug = GEN_SLUGS[gen] ?? "sv";
+  const storeKey = persistKey(genSlug, slug);
+
+  const persisted = await readPersisted(storeKey);
+  if (persisted) {
+    cache.set(key, persisted.analysis);
+    return persisted.analysis;
+  }
+
+  function remember(result: DraftAnalysis | null): DraftAnalysis | null {
+    cache.set(key, result);
+    void writePersisted(storeKey, result);
+    return result;
+  }
 
   try {
-    // Fetch via the Vite proxy to avoid CORS
-    const proxyUrl = `/api/smogon/dex/${genSlug}/pokemon/${slug}/draft/`;
-    const resp = await fetch(proxyUrl);
-    if (!resp.ok) {
-      cache.set(key, null);
-      return null;
-    }
+    // Smogon's own dex RPC (~100 KB) rather than the full dex page (~1 MB).
+    // Proxied to avoid CORS — Vite in dev, vercel.json rewrite in production.
+    const resp = await fetch("/api/smogon/dex/_rpc/dump-pokemon", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ gen: genSlug, alias: slug, language: "en" }),
+    });
+    // Non-OK may be transient (rate limit, outage) — don't cache, retry later
+    if (!resp.ok) return null;
 
-    const html = await resp.text();
+    // Unknown Pokemon come back as a 200 with a `null` body
+    const data = (await resp.json()) as DumpPokemonResponse | null;
+    const draft = data?.strategies?.find(
+      (s) => s.format?.toLowerCase() === "draft" && s.overview,
+    );
+    if (!draft?.overview) return remember(null);
 
-    // Extract the dexSettings JSON blob from the page
-    const match = html.match(/dexSettings\s*=\s*(\{.+\})\s*<\/script>/s);
-    if (!match) {
-      cache.set(key, null);
-      return null;
-    }
-
-    const data = JSON.parse(match[1]);
-    const rpcs = data.injectRpcs as [string, Record<string, unknown>][];
-
-    // Find the dump-pokemon RPC which contains strategies
-    let overview: string | null = null;
-    for (const rpc of rpcs) {
-      const rpcData = rpc[1] as { strategies?: { format: string; overview?: string }[] };
-      if (!rpcData?.strategies) continue;
-
-      for (const strategy of rpcData.strategies) {
-        if (strategy.format?.toLowerCase() === "draft" && strategy.overview) {
-          overview = strategy.overview;
-          break;
-        }
-      }
-      if (overview) break;
-    }
-
-    if (!overview) {
-      cache.set(key, null);
-      return null;
-    }
-
-    const result: DraftAnalysis = {
-      overview: extractSummary(overview),
-      smogonUrl,
-    };
-
-    cache.set(key, result);
-    return result;
+    return remember({ overview: extractSummary(draft.overview), smogonUrl });
   } catch {
-    cache.set(key, null);
+    // Network/parse failure — don't cache, so the next view retries
     return null;
   }
 }

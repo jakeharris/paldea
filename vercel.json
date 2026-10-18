@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/api/smogon/dex/_rpc/dump-pokemon",
+      "destination": "https://www.smogon.com/dex/_rpc/dump-pokemon"
+    },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}

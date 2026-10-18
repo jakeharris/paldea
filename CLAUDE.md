@@ -9,7 +9,7 @@ PALDEA is a React PWA for managing a Pokemon draft league. It handles roster bui
 ## Commands
 
 ```bash
-npm run dev        # Vite dev server on :5173, proxies /smogon → Smogon API
+npm run dev        # Vite dev server on :5173, proxies /api/smogon → smogon.com
 npm run build      # tsc --noEmit + vite build
 npm run preview    # Preview production build
 npm run test       # Vitest watch mode
@@ -105,6 +105,9 @@ try {
 
 ### `league-context.tsx` and Vite HMR
 This file exports both a provider component and hook functions, which prevents Vite Fast Refresh. Changes to it trigger a full page remount (you'll see `"Could not Fast Refresh"` in the console). This is normal — the remount re-runs the `useReducer` initializer from localStorage and is safe as long as the localStorage safety rule above is followed.
+
+### Smogon proxy in production
+`services/smogon.ts` POSTs to `/api/smogon/dex/_rpc/dump-pokemon` (Smogon's own dex RPC, ~100 KB vs ~1 MB for the dex page) because smogon.com sends no CORS headers. In dev the Vite proxy handles it; on Vercel (paldea.jakeharris.dev) the rewrite in `vercel.json` does. Any new Smogon endpoint needs a matching rewrite there, or it 404s in production only. Results are persisted in the Cache API (`smogon-draft-analyses`, 7-day TTL for hits, 1 day for misses) — keep request volume to Smogon low.
 
 ### Speed stage multipliers
 The full ±6 range formula is: `stage >= 0 ? (2 + stage) / 2 : 2 / (2 - stage)`. A simple lookup table only covering 0–2 will produce wrong results for negative stages or stages above +2.
