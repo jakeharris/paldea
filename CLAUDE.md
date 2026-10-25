@@ -36,6 +36,10 @@ State shape: `{ leagues, selectedLeagueId, selectedTeamId, selectedPokemonIndex 
 | `matchup-calc.ts` | Defensive type chart, speed tier calculations, coverage analysis, move categorization. |
 | `checklist.ts` | Sync and async team composition validators (speed, immunities, hazards, pivots, priority). |
 | `type-utils.tsx` | `TYPE_COLORS` map + `TypeBadge` React component. |
+| `smogon.ts` | Smogon `dump-pokemon` RPC: draft analysis + one standard set per mon (Draft → OU → National Dex → …), cached together. |
+| `damage.ts` | Wrapper over `@smogon/calc` (attacker/defender builders, field setup, OHKO chance). |
+| `offense-finder.ts` | Prep Wizard → Offense Finder search: fewest attackers (2+) whose learnsets OHKO the most opponents, ranked by coverage left after losing a member. KOs are checked against the opponent's Smogon set and a counter build (252 HP / 252+ in the hit defense). |
+| `showdown-export.ts` | Showdown paste export + `calc.pokemonshowdown.com/?import=<base64>` links. |
 
 ### Pages — `src/pages/`
 Route-level components. `TeamsPage` and `MatchupsPage` are the main feature pages; `HomePage` is a simple landing card.
@@ -46,12 +50,14 @@ Organized by feature:
 - `ui/` — `Tooltip`
 - `teams/` — `LeagueSection`, `TeamCard`, `PokemonRow`, `PokemonSearch`, `SidePanel`, `SidePanelSprite`, `SidePanelSmogon`, `SidePanelChecklist`
 - `matchups/` — `MatchupHero`, `DefensiveTypeChart`, `CoveragePlanner`, `SpeedTierTool`, `MoveCategoryPanel`
+- `prep/` — `PrepWizard` (tool switcher), `OffenseFinder`, `LoadoutCard`. Shown on `/matchups?view=prep`; the hero's exclusions apply to both views.
 
 ### Hooks — `src/hooks/`
 - `use-pokemon-search.ts` — Debounced autocomplete, returns `{ query, results, search(), clear() }`
 - `use-keyboard-search.ts` — Keyboard navigation for search results
 - `use-team-checklist.ts` — Runs checklist validators on a team
 - `use-matchup-moves.ts` — Async move categorization for two teams; cancel-safe via useEffect cleanup
+- `use-offense-finder.ts` — Runs the Offense Finder search with progress; cancel-safe
 
 ## Key Conventions
 
@@ -108,6 +114,12 @@ This file exports both a provider component and hook functions, which prevents V
 
 ### Smogon proxy in production
 `services/smogon.ts` POSTs to `/api/smogon/dex/_rpc/dump-pokemon` (Smogon's own dex RPC, ~100 KB vs ~1 MB for the dex page) because smogon.com sends no CORS headers. In dev the Vite proxy handles it; on Vercel (paldea.jakeharris.dev) the rewrite in `vercel.json` does. Any new Smogon endpoint needs a matching rewrite there, or it 404s in production only. Results are persisted in the Cache API (`smogon-draft-analyses`, 7-day TTL for hits, 1 day for misses) — keep request volume to Smogon low.
+
+### Damage calcs use `@smogon/calc/dist/adaptable`
+Import calc classes from `@smogon/calc/dist/adaptable` (via `services/damage.ts`), never the package root — the root pulls in the calc's own bundled dex. The adaptable build runs on our `@pkmn/data` generations (cast to the calc's `Generation` interface). The calc doesn't model Sturdy/Disguise/Ice Face blocking an OHKO, so `runCalc` handles those itself.
+
+### Showdown calc import links
+calc.pokemonshowdown.com reads `?import=<base64>` into its Import box (the user still clicks Import). It decodes with `atob`, so pastes must be ASCII (`showdown-export.ts` strips accents). A `Nickname (Species)` header names the custom set; the nickname must not itself be a species name.
 
 ### Speed stage multipliers
 The full ±6 range formula is: `stage >= 0 ? (2 + stage) / 2 : 2 / (2 - stage)`. A simple lookup table only covering 0–2 will produce wrong results for negative stages or stages above +2.

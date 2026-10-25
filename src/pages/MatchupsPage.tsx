@@ -1,12 +1,20 @@
 import { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { useActiveLeague } from "@/context/league-context";
 import { MatchupHero } from "@/components/matchups/MatchupHero";
 import { DefensiveTypeChart } from "@/components/matchups/DefensiveTypeChart";
 import { SpeedTierTool } from "@/components/matchups/SpeedTierTool";
 import { MoveCategoryPanel } from "@/components/matchups/MoveCategoryPanel";
 import { CoveragePlanner } from "@/components/matchups/CoveragePlanner";
+import { PrepWizard } from "@/components/prep/PrepWizard";
 import { useMatchupMoves } from "@/hooks/use-matchup-moves";
+
+type MatchupView = "overview" | "prep";
+
+const VIEWS: { id: MatchupView; label: string }[] = [
+  { id: "overview", label: "Overview" },
+  { id: "prep", label: "Prep Wizard" },
+];
 
 export function MatchupsPage() {
 
@@ -14,6 +22,17 @@ export function MatchupsPage() {
   const [excludedMyIds, setExcludedMyIds] = useState<Set<number>>(new Set());
   const [excludedOppIds, setExcludedOppIds] = useState<Set<number>>(new Set());
   const [coverageTypes, setCoverageTypes] = useState<Set<string>>(new Set());
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view: MatchupView = searchParams.get("view") === "prep" ? "prep" : "overview";
+
+  function setView(next: MatchupView) {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (next === "overview") params.delete("view");
+      else params.set("view", next);
+      return params;
+    }, { replace: true });
+  }
 
   const league = useActiveLeague();
 
@@ -126,36 +145,62 @@ export function MatchupsPage() {
             onToggleOppExclusion={toggleOppExclusion}
           />
 
-          <DefensiveTypeChart
-            myTeam={activeMyPokemon}
-            oppTeam={activeOppPokemon}
-            myTeamName={myTeam.playerName}
-            oppTeamName={oppTeam.playerName}
-            gen={league.generation}
-          />
+          {/* View switcher — the hero's exclusions apply to both views */}
+          <div className="glass rounded-pill p-1 flex self-start">
+            {VIEWS.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => setView(v.id)}
+                className={`font-body text-sm px-4 py-1.5 rounded-pill transition-colors ${
+                  view === v.id
+                    ? "gradient-accent text-purple-950 font-semibold"
+                    : "text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
 
-          <CoveragePlanner
-            oppTeam={activeOppPokemon}
-            gen={league.generation}
-            coverageTypes={coverageTypes}
-            onToggleCoverageType={toggleCoverageType}
-          />
+          {view === "prep" ? (
+            <PrepWizard
+              myTeam={activeMyPokemon}
+              oppTeam={activeOppPokemon}
+              gen={league.generation}
+            />
+          ) : (
+            <>
+              <DefensiveTypeChart
+                myTeam={activeMyPokemon}
+                oppTeam={activeOppPokemon}
+                myTeamName={myTeam.playerName}
+                oppTeamName={oppTeam.playerName}
+                gen={league.generation}
+              />
 
-          <SpeedTierTool
-            myTeam={activeMyPokemon}
-            oppTeam={activeOppPokemon}
-            myTeamName={myTeam.playerName}
-            oppTeamName={oppTeam.playerName}
-          />
+              <CoveragePlanner
+                oppTeam={activeOppPokemon}
+                gen={league.generation}
+                coverageTypes={coverageTypes}
+                onToggleCoverageType={toggleCoverageType}
+              />
 
-          <MoveCategoryPanel
-            myCategories={myCategories}
-            oppCategories={oppCategories}
-            myTeamName={myTeam.playerName}
-            oppTeamName={oppTeam.playerName}
-            loading={movesLoading}
-          />
+              <SpeedTierTool
+                myTeam={activeMyPokemon}
+                oppTeam={activeOppPokemon}
+                myTeamName={myTeam.playerName}
+                oppTeamName={oppTeam.playerName}
+              />
 
+              <MoveCategoryPanel
+                myCategories={myCategories}
+                oppCategories={oppCategories}
+                myTeamName={myTeam.playerName}
+                oppTeamName={oppTeam.playerName}
+                loading={movesLoading}
+              />
+            </>
+          )}
         </>
       )}
     </div>
