@@ -68,6 +68,10 @@ Organized by feature:
 - **Sprite URLs** — use `getSpriteUrl` / `getIconUrl` from `pokemon-data.ts`; never hardcode sprite paths
 - **No direct localStorage access** — all persistence goes through the league context reducer
 
+## Test Data
+
+`src/fixtures/leagues.json` is real league data (WCPL Season 4, archived, and Season 5, whose Anisteria team has Chi-Yu) stored compactly as species names plus `teraCaptains`; `buildSeedLeagues()` in `src/fixtures/seed.ts` expands it via the dex. To seed a fresh browser (e.g. the preview pane), open any route with `?seed` in dev — e.g. `http://localhost:5173/matchups?seed` — which **replaces** stored leagues with the fixture. Dev-only; the fixture is tree-shaken out of production builds. Tests can import `buildSeedLeagues()` directly.
+
 ## Pokemon Data Libraries
 
 `@pkmn/data` and `@pkmn/dex` provide generation-scoped species, moves, abilities, and learnsets. `@pkmn/smogon` provides tier and usage data (fetched via the Vite dev proxy in development). Access everything through the wrappers in `src/services/pokemon-data.ts` rather than calling `@pkmn` directly in components.

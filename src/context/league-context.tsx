@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { League, DraftTeam, DraftPokemon } from "@/services/types";
 import { getIconUrl, getSpriteUrl } from "@/services/pokemon-data";
+import { buildSeedLeagues } from "@/fixtures/seed";
 
 // ── State ──
 
@@ -206,6 +207,10 @@ const LeagueDispatchContext = createContext<Dispatch<Action>>(() => {});
 
 export function LeagueProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(leagueReducer, initialState, (init) => {
+    // Dev only: /?seed replaces stored leagues with src/fixtures/leagues.json
+    if (import.meta.env.DEV && new URLSearchParams(window.location.search).has("seed")) {
+      return { ...init, leagues: buildSeedLeagues() };
+    }
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
