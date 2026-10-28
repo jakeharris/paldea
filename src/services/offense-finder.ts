@@ -40,6 +40,9 @@ import type { DraftPokemon } from "./types";
 
 export type KoThreshold = "guaranteed" | "likely";
 
+/** How many Choice Band / Specs users a loadout may run */
+export type ChoiceLimit = "any" | "one" | "none";
+
 export interface OffenseFinderOptions extends FieldOptions {
   defenderMode: DefenderMode;
   koThreshold: KoThreshold;
@@ -50,6 +53,9 @@ export interface OffenseFinderOptions extends FieldOptions {
   maxLoadouts: number;
   /** Smallest core worth suggesting — a lone sweeper is too fragile to plan around */
   minCoreSize: number;
+  /** Only ≥90% accurate moves with no recharge turn and no self-KO */
+  premierOnly: boolean;
+  choiceLimit: ChoiceLimit;
 }
 
 export const DEFAULT_OFFENSE_OPTIONS: OffenseFinderOptions = {
@@ -59,6 +65,8 @@ export const DEFAULT_OFFENSE_OPTIONS: OffenseFinderOptions = {
   goal: 4,
   maxLoadouts: 5,
   minCoreSize: 2,
+  premierOnly: false,
+  choiceLimit: "any",
   weather: "",
   terrain: "",
   stealthRock: false,
@@ -118,9 +126,34 @@ export interface AttackerSet {
   minFocusEvs?: number;
 }
 
+/** The hardest hit available on a target that can't be OHKO'd */
+export interface BestEffortHit {
+  setId: string;
+  move: string;
+  moveType: string;
+  minPercent: number;
+  maxPercent: number;
+  /** The move isn't in the set yet — it would take a free slot */
+  addsMove: boolean;
+}
+
 export interface TargetCoverage {
   targetIndex: number;
   hits: { setId: string; hit: KoHit }[];
+  /** Filled for targets this loadout doesn't OHKO */
+  bestEffort?: BestEffortHit;
+}
+
+/** A roster-wide best hit on one target, at max investment */
+export interface RosterHit {
+  rosterIndex: number;
+  pokemon: DraftPokemon;
+  move: string;
+  moveType: string;
+  ability: string;
+  usesTera: boolean;
+  minPercent: number;
+  maxPercent: number;
 }
 
 export interface Loadout {
@@ -138,7 +171,7 @@ export interface Loadout {
   redundant: number;
   /** Fewest targets still covered after losing any one member */
   resilience: number;
-  /** Members whose loss drops coverage below the goal */
+  /** Members whose loss drops coverage below the goal (or the best achievable, if lower) */
   pointsOfFailure: string[];
   /** Uses more Pokémon than the minimum (to fill the list or add redundancy) */
   extraMon: boolean;
@@ -170,9 +203,13 @@ export interface TargetInfo {
 export interface OffenseFinderResult {
   targets: TargetInfo[];
   goal: number;
-  /** Fewest attackers that reach the goal, null if nothing reaches it */
+  /** Fewest attackers that reach the best achievable coverage (null: no OHKOs at all) */
   minMons: number | null;
   bestCoverage: number;
+  /** Whether bestCoverage meets the goal; if not, loadouts are best effort */
+  goalReached: boolean;
+  /** Per target, the hardest hits anyone on my roster can land (top 3) */
+  rosterBest: RosterHit[][];
   loadouts: Loadout[];
   /** Single sets that reach the goal alone — worth knowing, too fragile to build around */
   soloThreats: AttackerSet[];
@@ -219,10 +256,18 @@ function moveTags(move: PkmnMove): string[] {
   return tags;
 }
 
-function isUsableMove(move: PkmnMove, weather: string): boolean {
+/** Premier: ≥90% accurate, no recharge turn, user survives */
+export function isPremierMove(move: PkmnMove): boolean {
+  if (move.accuracy !== true && move.accuracy < 90) return false;
+  if (move.self && (move.self as { volatileStatus?: string }).volatileStatus === "mustrecharge") return false;
+  return !move.selfdestruct;
+}
+
+function isUsableMove(move: PkmnMove, weather: string, premierOnly: boolean): boolean {
   if (move.category === "Status") return false;
   if (move.isZ || move.isMax || move.ohko) return false;
   if (EXCLUDED_MOVES.has(move.id)) return false;
+  if (premierOnly && !isPremierMove(move)) return false;
   if (move.flags.charge) {
     if ((move.id === "solarbeam" || move.id === "solarblade") && weather.includes("Sun")) return true;
     if (move.id === "electroshot" && weather.includes("Rain")) return true;
@@ -257,11 +302,15 @@ function requiredItemOf(name: string): string | undefined {
   return species?.requiredItem ?? species?.requiredItems?.[0];
 }
 
-function itemOptions(p: DraftPokemon, nature: AttackNature, abilities: string[]): string[] {
+function isChoiceItem(item: string): boolean {
+  return item === "Choice Band" || item === "Choice Specs";
+}
+
+function itemOptions(p: DraftPokemon, nature: AttackNature, abilities: string[], choiceLimit: ChoiceLimit): string[] {
   const required = requiredItemOf(p.name);
   if (required) return [required];
   const choice = ATTACK_NATURES[nature].focus === "atk" ? "Choice Band" : "Choice Specs";
-  const items = ["", "Life Orb", choice];
+  const items = choiceLimit === "none" ? ["", "Life Orb"] : ["", "Life Orb", choice];
   if (abilities.some((a) => a === "Protosynthesis" || a === "Quark Drive")) items.splice(1, 0, "Booster Energy");
   return items;
 }
@@ -427,7 +476,10 @@ export async function findOffensiveLoadouts(
   }
 
   const setsByMon: AttackerSet[][] = [];
+  const poolByMon: PkmnMove[][] = [];
   const viableAnywhere = new Set<number>();
+  // Best upper-bound hit per (target, mon), for targets nobody can OHKO
+  const rosterBestByTarget: Map<number, RosterHit>[] = oppTeam.map(() => new Map());
 
   for (let i = 0; i < myTeam.length; i++) {
     if (cancelled()) return null;
@@ -437,6 +489,7 @@ export async function findOffensiveLoadouts(
     const abilities = abilitiesOf(mon);
     const canTera = mon.isTeraCaptain && gen === 9;
     const allMoves = await getDamagingMoves(mon.name, gen);
+    poolByMon.push(allMoves);
     const required = requiredItemOf(mon.name);
 
     // Phase 1: upper bound per (ability, move, tera?, target)
@@ -445,9 +498,12 @@ export async function findOffensiveLoadouts(
     for (const ability of abilities) {
       const weather = effectiveWeather(ability, field);
       for (const move of allMoves) {
-        if (!isUsableMove(move, weather)) continue;
+        if (!isUsableMove(move, weather, options.premierOnly)) continue;
         const nature: AttackNature = move.category === "Physical" ? "Adamant" : "Modest";
-        const item = required ?? (move.category === "Physical" ? "Choice Band" : "Choice Specs");
+        const item = required ?? (
+          options.choiceLimit === "none" ? "Life Orb" :
+          move.category === "Physical" ? "Choice Band" : "Choice Specs"
+        );
         for (const tera of canTera ? [false, true] : [false]) {
           const attacker = buildAttacker(gen, {
             species: mon.name, nature, ability, item, level: options.level,
@@ -456,6 +512,13 @@ export async function findOffensiveLoadouts(
           for (let t = 0; t < oppTeam.length; t++) {
             const { worst: out } = calcVsTarget(attacker, move, t);
             await tick();
+            const prevBest = rosterBestByTarget[t].get(i);
+            if (!prevBest || out.minPercent > prevBest.minPercent) {
+              rosterBestByTarget[t].set(i, {
+                rosterIndex: i, pokemon: mon, move: move.name, moveType: move.type, ability,
+                usesTera: tera, minPercent: out.minPercent, maxPercent: out.maxPercent,
+              });
+            }
             if (meetsThreshold(out.ohkoChance, options.koThreshold)) {
               viable.add(`${ability}|${move.id}|${tera}|${t}`);
               usefulMoves.set(move.id, move);
@@ -477,7 +540,7 @@ export async function findOffensiveLoadouts(
         plusNature: ATTACK_NATURES[nature].plusSpe, scarf: false, speedStage: 0,
       });
       for (const ability of abilities) {
-        for (const item of itemOptions(mon, nature, abilities)) {
+        for (const item of itemOptions(mon, nature, abilities, options.choiceLimit)) {
           for (const teraType of [null, ...teraTypes]) {
             // Per-move hits under this config
             const moveHits: { move: PkmnMove; mask: number; hits: Map<number, KoHit> }[] = [];
@@ -556,7 +619,8 @@ export async function findOffensiveLoadouts(
                 if (teraType && !kos.some((h) => h.usesTera)) continue;
 
                 const moves = combo.map((m) => m.move.name).sort();
-                const key = `${nature}|${teraType ?? ""}|${moves.join(",")}`;
+                // Choice vs. not stays distinct so a Choice limit still has options
+                const key = `${nature}|${teraType ?? ""}|${isChoiceItem(item)}|${moves.join(",")}`;
                 const candidate: AttackerSet = {
                   id: `${i}|${key}`,
                   rosterIndex: i,
@@ -586,9 +650,27 @@ export async function findOffensiveLoadouts(
   control.onProgress?.(0.92);
   await yieldToUi();
 
+  const maxChoice = options.choiceLimit === "any" ? Infinity : options.choiceLimit === "one" ? 1 : 0;
   const { loadouts, minMons, bestCoverage, soloThreats } = searchLoadouts(
-    setsByMon, oppTeam.length, goal, options.maxLoadouts, options.minCoreSize,
+    setsByMon, oppTeam.length, goal, options.maxLoadouts, options.minCoreSize, maxChoice,
   );
+
+  // Targets a loadout misses: the hardest hit its members can land instead
+  const effortCache = new Map<string, BestEffortHit | null>();
+  for (const loadout of loadouts) {
+    for (const cov of loadout.coverage) {
+      if (cov.hits.length) continue;
+      if (cancelled()) return null;
+      let best: BestEffortHit | null = null;
+      for (const set of loadout.sets) {
+        const key = `${set.id}|${set.item}|${set.ability}|${cov.targetIndex}`;
+        if (!effortCache.has(key)) effortCache.set(key, await bestEffortHit(set, cov.targetIndex));
+        const hit = effortCache.get(key)!;
+        if (hit && (!best || hit.minPercent > best.minPercent)) best = hit;
+      }
+      if (best) cov.bestEffort = best;
+    }
+  }
 
   // Fill in minimum EVs for the sets we're showing
   for (const set of new Set([...loadouts.flatMap((l) => l.sets), ...soloThreats])) {
@@ -603,11 +685,40 @@ export async function findOffensiveLoadouts(
     goal,
     minMons,
     bestCoverage,
+    goalReached: bestCoverage >= goal,
+    rosterBest: rosterBestByTarget.map((m) =>
+      [...m.values()].sort((a, b) => b.minPercent - a.minPercent).slice(0, 3),
+    ),
     loadouts,
     soloThreats,
     unkoable: oppTeam.map((_, t) => t).filter((t) => !viableAnywhere.has(t)),
     calcCount,
   };
+
+  /** Strongest hit this set can land on a target it doesn't OHKO — free slots may take a new move */
+  async function bestEffortHit(set: AttackerSet, t: number): Promise<BestEffortHit | null> {
+    const weather = effectiveWeather(set.ability, field);
+    const candidates = set.moves.length < 4
+      ? poolByMon[set.rosterIndex].filter((m) => isUsableMove(m, weather, options.premierOnly))
+      : set.moves.map((m) => generation.moves.get(m)!);
+    const attacker = buildAttacker(gen, {
+      species: set.pokemon.name, nature: set.nature, ability: set.ability, item: set.item,
+      teraType: set.teraType ?? undefined, level: options.level,
+    });
+    let best: BestEffortHit | null = null;
+    for (const move of candidates) {
+      const { worst } = calcVsTarget(attacker, move, t);
+      await tick();
+      if (!best || worst.minPercent > best.minPercent) {
+        best = {
+          setId: set.id, move: move.name, moveType: move.type,
+          minPercent: worst.minPercent, maxPercent: worst.maxPercent,
+          addsMove: !set.moves.includes(move.name),
+        };
+      }
+    }
+    return best && best.maxPercent > 0 ? best : null;
+  }
 
   /** Smallest focus-stat EV investment (multiple of 4) that keeps every KO */
   async function minFocusEvs(set: AttackerSet): Promise<number> {
@@ -660,6 +771,7 @@ function pruneSets(sets: AttackerSet[], perMon = 8): AttackerSet[] {
       o !== s &&
       o.nature === s.nature &&
       !!o.teraType === !!s.teraType &&
+      isChoiceItem(o.item) === isChoiceItem(s.item) &&
       (o.mask & s.mask) === s.mask &&
       o.mask !== s.mask,
     ),
@@ -669,7 +781,7 @@ function pruneSets(sets: AttackerSet[], perMon = 8): AttackerSet[] {
   const out: AttackerSet[] = [];
   const seenMasks = new Set<string>();
   for (const s of maximal) {
-    const k = `${s.mask}|${!!s.teraType}`;
+    const k = `${s.mask}|${!!s.teraType}|${isChoiceItem(s.item)}`;
     if (!seenMasks.has(k)) { seenMasks.add(k); out.push(s); }
   }
   for (const s of maximal) {
@@ -726,6 +838,8 @@ export function searchLoadouts(
   goal: number,
   maxLoadouts: number,
   minCoreSize = 1,
+  /** Most Choice Band / Specs users allowed in one loadout */
+  maxChoice = Infinity,
 ): { loadouts: Loadout[]; minMons: number | null; bestCoverage: number; soloThreats: AttackerSet[] } {
   // Solo threats: best single set per mon that reaches the goal by itself
   const soloThreats = setsByMon
@@ -738,32 +852,42 @@ export function searchLoadouts(
   const minK = Math.min(minCoreSize, maxK);
   if (maxK === 0) return { loadouts: [], minMons: null, bestCoverage: 0, soloThreats };
 
-  /** Visit every combo of k attackers (at most one Tera user) */
+  /** Visit every combo of k attackers (at most one Tera user, at most maxChoice Choice users) */
   function forEachCombo(k: number, visit: (sets: AttackerSet[], mask: number) => void) {
     for (const mons of combinations(monIdx, k)) {
       const chosen: AttackerSet[] = [];
-      (function rec(d: number, mask: number, tera: boolean) {
+      (function rec(d: number, mask: number, tera: boolean, choices: number) {
         if (d === mons.length) { visit(chosen, mask); return; }
         for (const s of setsByMon[mons[d]]) {
           if (tera && s.teraType) continue;
+          const choice = isChoiceItem(s.item) ? 1 : 0;
+          if (choices + choice > maxChoice) continue;
           chosen.push(s);
-          rec(d + 1, mask | s.mask, tera || !!s.teraType);
+          rec(d + 1, mask | s.mask, tera || !!s.teraType, choices + choice);
           chosen.pop();
         }
-      })(0, 0, false);
+      })(0, 0, false, 0);
     }
   }
 
+  // Fewest attackers reaching the goal — or, when restrictions make the goal
+  // impossible, the fewest reaching the best coverage there is
   let minMons: number | null = null;
   let bestCoverage = 0;
-  for (let k = minK; k <= maxK && minMons === null; k++) {
-    forEachCombo(k, (_, mask) => { bestCoverage = Math.max(bestCoverage, popcount(mask)); });
-    if (bestCoverage >= goal) minMons = k;
+  const bestAtK = new Map<number, number>();
+  for (let k = minK; k <= maxK; k++) {
+    let best = 0;
+    forEachCombo(k, (_, mask) => { best = Math.max(best, popcount(mask)); });
+    bestAtK.set(k, best);
+    bestCoverage = Math.max(bestCoverage, best);
+    if (best >= goal) break;
   }
-
-  // Shortfall: show the best partial coverage with the most attackers allowed
-  const baseK = minMons ?? maxK;
-  const threshold = minMons ? goal : bestCoverage;
+  const threshold = Math.min(goal, bestCoverage);
+  if (threshold === 0) return { loadouts: [], minMons: null, bestCoverage: 0, soloThreats };
+  for (let k = minK; k <= maxK && minMons === null; k++) {
+    if ((bestAtK.get(k) ?? 0) >= threshold) minMons = k;
+  }
+  const baseK = minMons!;
 
   /** Top loadouts of size k — a cheap score bounds how many get fully built */
   function rank(k: number, extraMon: boolean): Loadout[] {
@@ -782,7 +906,8 @@ export function searchLoadouts(
     });
     trim();
     return pool
-      .map((c) => buildLoadout(c.sets, nTargets, goal, extraMon))
+      // Points of failure are judged against what's achievable, not an unreachable goal
+      .map((c) => buildLoadout(c.sets, nTargets, threshold, extraMon))
       .sort((a, b) => loadoutScore(b) - loadoutScore(a));
   }
 

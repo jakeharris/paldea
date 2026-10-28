@@ -28,12 +28,17 @@ function Icon({ mon, className = "w-8 h-8" }: { mon: DraftPokemon; className?: s
   );
 }
 
-const SPEED_LABEL: Record<KoHit["speed"], { text: string; className: string }> = {
-  priority: { text: "Priority", className: "text-accent" },
-  faster: { text: "Outspeeds", className: "text-accent" },
-  "faster-neutral": { text: "Outspeeds neutral", className: "text-amber-300" },
-  "faster-standard": { text: "Outspeeds Smogon set", className: "text-amber-300" },
-  slower: { text: "Slower", className: "text-orange-400" },
+/** Always phrased from your side so it's clear who moves first */
+const SPEED_LABEL: Record<KoHit["speed"], { text: string; title: string; className: string }> = {
+  priority: { text: "You move first (priority)", title: "Priority move", className: "text-accent" },
+  faster: { text: "You move first", title: "You outspeed even their max Speed, +Spe nature", className: "text-accent" },
+  "faster-neutral": {
+    text: "You move first unless +Spe", title: "You outspeed their max Speed with a neutral nature, but not +Spe", className: "text-amber-300",
+  },
+  "faster-standard": {
+    text: "You outspeed their Smogon set", title: "Faster than their standard set, but not a max-Speed build", className: "text-amber-300",
+  },
+  slower: { text: "They move first", title: "They outspeed you — you need to survive a hit or switch in", className: "text-orange-400" },
 };
 
 function MoveChip({ name, type }: { name: string; type: string }) {
@@ -88,19 +93,38 @@ function SetRow({ set, targets }: { set: AttackerSet; targets: OffenseFinderResu
 function CoverageCell({
   target,
   hits,
+  bestEffort,
   setsById,
 }: {
   target: OffenseFinderResult["targets"][number];
   hits: Loadout["coverage"][number]["hits"];
+  bestEffort?: Loadout["coverage"][number]["bestEffort"];
   setsById: Map<string, AttackerSet>;
 }) {
   const best = hits[0];
   if (!best) {
+    const by = bestEffort ? setsById.get(bestEffort.setId) : undefined;
     return (
-      <div className="glass rounded-lg p-2.5 flex flex-col items-center gap-1 opacity-40">
-        <Icon mon={target.pokemon} />
+      <div className="glass rounded-lg p-2.5 flex flex-col items-center gap-1 border border-dashed border-surface-raised">
+        <Icon mon={target.pokemon} className="w-8 h-8 opacity-60" />
         <span className="font-body text-[10px] text-text-secondary text-center leading-tight">{target.pokemon.name}</span>
-        <span className="font-mono text-[10px] text-text-muted">Not covered</span>
+        <span className="font-body text-[10px] text-orange-400">No OHKO</span>
+        {bestEffort && by ? (
+          <>
+            <div className="flex items-center gap-1">
+              <Icon mon={by.pokemon} className="w-5 h-5" />
+              <span className="font-body text-[11px] text-text-secondary text-center leading-tight">{bestEffort.move}</span>
+            </div>
+            <span className="font-mono text-[10px] text-text-primary whitespace-nowrap">
+              {bestEffort.minPercent.toFixed(0)}–{bestEffort.maxPercent.toFixed(0)}%
+            </span>
+            {bestEffort.addsMove && (
+              <span className="font-body text-[10px] text-text-muted text-center leading-tight">uses a free slot</span>
+            )}
+          </>
+        ) : (
+          <span className="font-body text-[10px] text-text-muted">No damage</span>
+        )}
       </div>
     );
   }
@@ -146,7 +170,9 @@ function CoverageCell({
             </span>
           );
         })}
-        <span className={`font-body text-[10px] ${speed.className}`}>{speed.text}</span>
+        <span className={`font-body text-[10px] text-center leading-tight ${speed.className}`} title={speed.title}>
+          {speed.text}
+        </span>
         {best.hit.accuracy < 100 && (
           <span className="font-body text-[10px] text-amber-300">{best.hit.accuracy}% acc</span>
         )}
@@ -188,7 +214,7 @@ export function LoadoutCard({ loadout, index, result, mode, gen, level }: Loadou
           OHKOs {loadout.covered}/{total}
         </span>
         <span className="font-body text-xs text-text-muted">
-          {loadout.reliable} clean · {loadout.firstStrike} moving first · {loadout.redundant} with backup
+          {loadout.reliable} clean · you move first on {loadout.firstStrike} · {loadout.redundant} with backup
         </span>
         {loadout.usesTera && (
           <span className="font-body text-[11px] px-2 py-0.5 rounded-pill bg-surface-raised text-text-secondary">Uses Tera</span>
@@ -225,7 +251,8 @@ export function LoadoutCard({ loadout, index, result, mode, gen, level }: Loadou
 
       {loadout.pointsOfFailure.length > 0 && (
         <p className="px-4 pt-2 font-body text-[11px] text-orange-400">
-          Falls below the goal without {loadout.pointsOfFailure.join(" or ")}
+          Drops below {result.goalReached ? result.goal : result.bestCoverage} OHKOs without{" "}
+          {loadout.pointsOfFailure.join(" or ")}
         </p>
       )}
 
@@ -236,7 +263,13 @@ export function LoadoutCard({ loadout, index, result, mode, gen, level }: Loadou
       <div className="px-4 pb-4 pt-2">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           {loadout.coverage.map((c) => (
-            <CoverageCell key={c.targetIndex} target={result.targets[c.targetIndex]} hits={c.hits} setsById={setsById} />
+            <CoverageCell
+              key={c.targetIndex}
+              target={result.targets[c.targetIndex]}
+              hits={c.hits}
+              bestEffort={c.bestEffort}
+              setsById={setsById}
+            />
           ))}
         </div>
       </div>

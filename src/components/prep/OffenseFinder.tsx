@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { DraftPokemon } from "@/services/types";
 import {
   DEFAULT_OFFENSE_OPTIONS,
+  type ChoiceLimit,
   type KoThreshold,
   type OffenseFinderOptions,
 } from "@/services/offense-finder";
@@ -182,6 +183,27 @@ export function OffenseFinder({ myTeam, oppTeam, gen }: OffenseFinderProps) {
             ]}
           />
         </Control>
+        <Control label="Moves">
+          <Segmented<string>
+            value={options.premierOnly ? "premier" : "all"}
+            onChange={(v) => set("premierOnly", v === "premier")}
+            options={[
+              { value: "all", label: "All" },
+              { value: "premier", label: "Premier only", title: "≥90% accuracy, no recharge turn, no self-KO" },
+            ]}
+          />
+        </Control>
+        <Control label="Band / Specs">
+          <Segmented<ChoiceLimit>
+            value={options.choiceLimit}
+            onChange={(v) => set("choiceLimit", v)}
+            options={[
+              { value: "any", label: "Any" },
+              { value: "one", label: "Max 1", title: "At most one Choice Band / Specs user per loadout" },
+              { value: "none", label: "None" },
+            ]}
+          />
+        </Control>
         <Control label="OHKO goal">
           <Segmented<number> value={options.goal} onChange={(v) => set("goal", v)} options={goalOptions} />
         </Control>
@@ -238,16 +260,19 @@ export function OffenseFinder({ myTeam, oppTeam, gen }: OffenseFinderProps) {
           <>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
               <p className="font-body text-sm text-text-primary">
-                {result.minMons !== null ? (
+                {result.goalReached ? (
                   <>
                     <span className="font-semibold text-accent">{result.minMons} attackers</span> are enough to OHKO{" "}
                     {result.goal}+ of {result.targets.length}.
                   </>
-                ) : (
+                ) : result.minMons !== null ? (
                   <>
-                    No group of up to 4 reaches {result.goal} OHKOs — best is{" "}
-                    <span className="font-semibold text-orange-400">{result.bestCoverage}/{result.targets.length}</span>.
+                    No group of up to 4 reaches {result.goal} OHKOs under these settings. Best effort:{" "}
+                    <span className="font-semibold text-orange-400">{result.bestCoverage}/{result.targets.length}</span>{" "}
+                    with {result.minMons} attackers — damage is listed for the rest.
                   </>
+                ) : (
+                  <>Nothing on your team can OHKO anything under these settings — best damage per target is below.</>
                 )}
               </p>
               <p className="font-body text-[11px] text-text-muted">
@@ -256,23 +281,32 @@ export function OffenseFinder({ myTeam, oppTeam, gen }: OffenseFinderProps) {
             </div>
 
             {result.unkoable.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 rounded-lg bg-surface-raised px-3 py-2">
-                <span className="font-body text-xs text-text-secondary">Nothing on your team OHKOs:</span>
+              <div className="flex flex-col gap-1.5 rounded-lg bg-surface-raised px-3 py-2">
+                <span className="font-body text-xs text-text-secondary">
+                  Nothing on your team OHKOs these — hardest hits at full investment:
+                </span>
                 {result.unkoable.map((t) => {
-                  const p = result.targets[t].pokemon;
+                  const target = result.targets[t];
                   return (
-                    <span key={t} className="flex items-center gap-1 font-body text-xs text-text-primary">
-                      <img
-                        src={p.icon}
-                        alt=""
-                        className="w-6 h-6 [image-rendering:pixelated]"
-                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = getSpriteUrl(p.name); }}
-                      />
-                      {p.name}
-                      {result.targets[t].ohkoBlockers.length > 0 && (
-                        <span className="text-text-muted">({result.targets[t].ohkoBlockers.join("/")})</span>
-                      )}
-                    </span>
+                    <div key={t} className="flex flex-wrap items-center gap-x-2 gap-y-1 font-body text-[11px]">
+                      <MonIcon mon={target.pokemon} />
+                      <span className="text-text-primary w-24 shrink-0">
+                        {target.pokemon.name}
+                        {target.ohkoBlockers.length > 0 && (
+                          <span className="text-text-muted"> ({target.ohkoBlockers.join("/")})</span>
+                        )}
+                      </span>
+                      {result.rosterBest[t].length === 0 && <span className="text-text-muted">No damaging moves</span>}
+                      {result.rosterBest[t].map((h) => (
+                        <span key={h.rosterIndex} className="flex items-center gap-1 text-text-secondary">
+                          <MonIcon mon={h.pokemon} className="w-5 h-5" />
+                          {h.pokemon.name} {h.move}{h.usesTera && " (Tera)"}{" "}
+                          <span className="font-mono text-text-primary">
+                            {h.minPercent.toFixed(0)}–{h.maxPercent.toFixed(0)}%
+                          </span>
+                        </span>
+                      ))}
+                    </div>
                   );
                 })}
               </div>
