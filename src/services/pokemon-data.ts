@@ -61,9 +61,47 @@ function buildAbilities(abilities: { 0: string; 1?: string; H?: string }): Abili
   };
 }
 
-/** Convert a species name to a Showdown-compatible ID (preserves form hyphens) */
-function toShowdownId(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9-]/g, "");
+const toId = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/**
+ * Convert a species name to Showdown's sprite ID: base species ID, plus
+ * "-forme" for formes. Hyphens inside a base name are dropped
+ * ("Chi-Yu" → "chiyu", "Ogerpon-Wellspring" → "ogerpon-wellspring").
+ */
+export function toShowdownId(name: string): string {
+  const species = Dex.species.get(name);
+  if (!species.exists) return name.toLowerCase().replace(/[^a-z0-9-]/g, "");
+  return toId(species.baseSpecies) + (species.forme ? `-${toId(species.forme)}` : "");
+}
+
+const MAX_IMAGE_RETRIES = 6;
+
+/**
+ * Retry a failed <img> load with Fibonacci backoff (1s, 1s, 2s, 3s, 5s, 8s),
+ * then give up. The count is tied to the current src so a reused element
+ * starts fresh when it's pointed at a different image.
+ */
+export function retryWithBackoff(img: HTMLImageElement): void {
+  const src = img.src;
+  const attempt = img.dataset.retrySrc === src ? Number(img.dataset.retries) : 0;
+  if (attempt >= MAX_IMAGE_RETRIES) return;
+  img.dataset.retrySrc = src;
+  img.dataset.retries = String(attempt + 1);
+  let [a, b] = [1, 1];
+  for (let i = 0; i < attempt; i++) [a, b] = [b, a + b];
+  setTimeout(() => {
+    if (img.isConnected && img.src === src) img.src = src;
+  }, a * 1000);
+}
+
+/** onError handler for icons: swap to the HOME sprite, then back off if that fails too */
+export function iconFallback(name: string) {
+  return (e: { currentTarget: HTMLImageElement }) => {
+    const img = e.currentTarget;
+    const fallback = getSpriteUrl(name);
+    if (img.src !== fallback) img.src = fallback;
+    else retryWithBackoff(img);
+  };
 }
 
 /** Construct Showdown dex sprite URL (120x120 PNG, always available) */

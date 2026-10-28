@@ -14,7 +14,7 @@ import {
   type WeatherOption,
 } from "@/services/damage";
 import type { AttackerSet, TargetInfo } from "@/services/offense-finder";
-import { getSpriteUrl } from "@/services/pokemon-data";
+import { iconFallback } from "@/services/pokemon-data";
 import { useOffenseFinder } from "@/hooks/use-offense-finder";
 import { LoadoutCard } from "./LoadoutCard";
 
@@ -68,7 +68,7 @@ function MonIcon({ mon, className = "w-6 h-6" }: { mon: DraftPokemon; className?
       src={mon.icon}
       alt=""
       className={`${className} [image-rendering:pixelated] shrink-0`}
-      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = getSpriteUrl(mon.name); }}
+      onError={iconFallback(mon.name)}
     />
   );
 }

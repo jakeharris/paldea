@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { DraftPokemon } from "@/services/types";
-import { getAnimatedSpriteUrl, getSpriteUrl } from "@/services/pokemon-data";
+import { getAnimatedSpriteUrl, getSpriteUrl, retryWithBackoff } from "@/services/pokemon-data";
 import { TYPE_COLORS } from "@/services/type-utils";
 
 export function SidePanelSprite({ pokemon }: { pokemon: DraftPokemon }) {
@@ -22,8 +22,9 @@ export function SidePanelSprite({ pokemon }: { pokemon: DraftPokemon }) {
           src={useAnimated ? animatedUrl : fallbackUrl}
           alt={pokemon.name}
           className="max-w-full max-h-full object-contain [image-rendering:pixelated]"
-          onError={() => {
+          onError={(e) => {
             if (useAnimated) setUseAnimated(false);
+            else retryWithBackoff(e.currentTarget);
           }}
         />
       </div>

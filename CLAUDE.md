@@ -89,7 +89,9 @@ This applies in both `matchup-calc.ts` (move categorization) and `checklist.ts` 
 ### Sprite/icon URLs
 Icons use a two-tier strategy: `getIconUrl` returns `sprites/dex/{id}.png` (smaller files, primary), and components add an `onError` fallback to `getSpriteUrl` (`sprites/home/`) for Pokemon missing from `dex/`. `sprites/dex/` covers Gen 1–5 and many others but 404s on some Gen 8+ mons. `sprites/home/` covers all generations. `sprites/gen5/` only covers Gen 1–5.
 
-Form names keep their hyphen in sprite filenames: `toShowdownId("Ogerpon-Wellspring")` → `"ogerpon-wellspring"` → `sprites/home/ogerpon-wellspring.png` ✓
+`toShowdownId` mirrors Showdown's sprite IDs: base species ID, plus `-forme` for formes. Hyphens inside a base name are dropped and multi-word formes are squashed: `"Chi-Yu"` → `chiyu`, `"Ogerpon-Wellspring"` → `ogerpon-wellspring`, `"Urshifu-Rapid-Strike"` → `urshifu-rapidstrike`. A naive "keep every hyphen" ID 404s on these.
+
+Image `onError` handlers must use `iconFallback(name)` / `retryWithBackoff(img)` from `pokemon-data.ts`. React's `onError` prop ignores `img.onerror = null`, so a handler that reassigns `src` to a URL that also 404s loops forever — hundreds of requests per broken sprite. `retryWithBackoff` retries on a Fibonacci schedule (1s…8s, 6 tries) and then stops.
 
 ### localStorage safety in `LeagueProvider`
 The `useReducer` lazy initializer in `LeagueProvider` wraps the localStorage read in a `try/catch`. If **anything** inside the try throws, the catch returns `init` (empty state), and then `useEffect` immediately saves that empty state — wiping the user's data permanently.

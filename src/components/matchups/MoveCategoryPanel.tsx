@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { AllMoveCategoryResults, MoveCategoryResult } from "@/services/matchup-calc";
-import { getSpriteUrl } from "@/services/pokemon-data";
+import { iconFallback } from "@/services/pokemon-data";
 
 interface MoveCategoryPanelProps {
   myCategories: AllMoveCategoryResults | null;
@@ -63,7 +63,7 @@ function CategorySection({
                       src={entry.pokemonIcon}
                       alt={entry.pokemonName}
                       className="w-4 h-4 [image-rendering:pixelated]"
-                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = getSpriteUrl(entry.pokemonName); }}
+                      onError={iconFallback(entry.pokemonName)}
                     />
                     <span className="font-body text-[10px] text-text-secondary">{entry.pokemonName}</span>
                   </div>
