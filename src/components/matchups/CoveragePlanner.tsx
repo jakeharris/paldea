@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import type { DraftPokemon } from "@/services/types";
 import { computeCoverage, ALL_TYPES } from "@/services/matchup-calc";
 import { TypeBadge, TYPE_COLORS } from "@/services/type-utils";
-import { getSpriteUrl } from "@/services/pokemon-data";
+import { iconFallback } from "@/services/pokemon-data";
 
 interface CoveragePlannerProps {
   oppTeam: DraftPokemon[];
@@ -131,7 +131,7 @@ export function CoveragePlanner({
                       src={mon.icon}
                       alt={mon.name}
                       className="w-8 h-8 [image-rendering:pixelated]"
-                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = getSpriteUrl(mon.name); }}
+                      onError={iconFallback(mon.name)}
                     />
                     <span className="font-body text-[10px] text-text-secondary text-center leading-tight">
                       {mon.name}
@@ -152,7 +152,7 @@ export function CoveragePlanner({
                       src={result.pokemon.icon}
                       alt={result.pokemon.name}
                       className="w-8 h-8 [image-rendering:pixelated]"
-                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = getSpriteUrl(result.pokemon.name); }}
+                      onError={iconFallback(result.pokemon.name)}
                     />
                     <span className="font-body text-[10px] text-text-secondary text-center leading-tight">
                       {result.pokemon.name}

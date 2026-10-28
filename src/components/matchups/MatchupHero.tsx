@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { DraftTeam } from "@/services/types";
-import { getAnimatedSpriteUrl, getSpriteUrl } from "@/services/pokemon-data";
+import { getAnimatedSpriteUrl, getSpriteUrl, retryWithBackoff } from "@/services/pokemon-data";
 
 interface MatchupHeroProps {
   myTeam: DraftTeam;
@@ -33,7 +33,7 @@ function PokemonSprite({
           src={useAnimated ? animatedUrl : fallbackUrl}
           alt={name}
           className="w-16 h-16 object-contain [image-rendering:pixelated]"
-          onError={() => { if (useAnimated) setUseAnimated(false); }}
+          onError={(e) => { if (useAnimated) setUseAnimated(false); else retryWithBackoff(e.currentTarget); }}
         />
         {/* Checkbox overlay */}
         <button

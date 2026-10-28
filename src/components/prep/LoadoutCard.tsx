@@ -4,7 +4,7 @@ import type { AttackerSet, KoHit, Loadout, OffenseFinderResult } from "@/service
 import type { DefenderMode } from "@/services/damage";
 import { ATTACK_NATURES } from "@/services/damage";
 import { TYPE_COLORS, TypeBadge } from "@/services/type-utils";
-import { getSpriteUrl } from "@/services/pokemon-data";
+import { iconFallback } from "@/services/pokemon-data";
 import { loadoutPaste, showdownCalcUrl } from "@/services/showdown-export";
 import { Tooltip } from "@/components/ui/Tooltip";
 
@@ -23,7 +23,7 @@ function Icon({ mon, className = "w-8 h-8" }: { mon: DraftPokemon; className?: s
       src={mon.icon}
       alt={mon.name}
       className={`${className} [image-rendering:pixelated] shrink-0`}
-      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = getSpriteUrl(mon.name); }}
+      onError={iconFallback(mon.name)}
     />
   );
 }
