@@ -1,0 +1,107 @@
+[
+  {
+    "id": "1774328556565-1",
+    "name": "WCPL Season 4",
+    "generation": 9,
+    "format": "draft",
+    "teamSize": 11,
+    "archived": true,
+    "collapsed": true,
+    "teams": [
+      {
+        "id": "1774328561824-3",
+        "playerName": "Milly",
+        "isMyTeam": true,
+        "pokemon": ["Iron Valiant", "Gliscor", "Gholdengo", "Ogerpon", "Diancie", "Latias", "Manaphy", "Okidogi", "Charjabug", "Hattrem"],
+        "teraCaptains": ["Ogerpon"]
+      },
+      {
+        "id": "1774328568924-5",
+        "playerName": "SpicyPlate (Zach)",
+        "pokemon": ["Slowking-Galar", "Iron Bundle", "Baxcalibur", "Serperior", "Quaquaval", "Ribombee", "Great Tusk", "Clefable", "Drakloak"],
+        "teraCaptains": ["Serperior"]
+      },
+      {
+        "id": "1774328577807-7",
+        "playerName": "ScienceWhizz (Joseph)",
+        "pokemon": ["Tornadus-Therian", "Meowscarada", "Pecharunt", "Toxapex", "Hydrapple", "Primarina", "Ogerpon-Wellspring", "Morpeko", "Corviknight"],
+        "teraCaptains": ["Hydrapple", "Primarina"]
+      },
+      {
+        "id": "1774328583540-9",
+        "playerName": "Tymmyr",
+        "pokemon": ["Iron Treads", "Weezing-Galar", "Zapdos", "Alomomola", "Arcanine-Hisui", "Hoopa-Unbound", "Scizor", "Magikarp", "Shuckle", "Greninja"],
+        "teraCaptains": ["Alomomola", "Arcanine-Hisui"]
+      },
+      {
+        "id": "1774328587416-11",
+        "playerName": "Ozymandias",
+        "pokemon": ["Espathra", "Annihilape", "Clodsire", "Kingambit", "Garganacl", "Darkrai", "Dragonite", "Empoleon", "Deoxys-Defense"],
+        "teraCaptains": ["Clodsire", "Garganacl"]
+      },
+      {
+        "id": "1774328593866-13",
+        "playerName": "APokemonProf (Adam)",
+        "pokemon": ["Terapagos", "Roaring Moon", "Landorus", "Ogerpon-Hearthflame", "Uxie", "Keldeo", "Overqwil", "Tinkaton", "Smeargle"],
+        "teraCaptains": ["Keldeo", "Smeargle"]
+      },
+      {
+        "id": "1774995190706-0",
+        "playerName": "Anisteria (Charlie)",
+        "pokemon": ["Pelipper", "Landorus-Therian", "Sylveon", "Kilowattrel", "Samurott-Hisui", "Amoonguss", "Metagross", "Polteageist-Antique", "Garchomp", "Meloetta", "Mawile"],
+        "teraCaptains": ["Kilowattrel", "Samurott-Hisui"]
+      },
+      {
+        "id": "1774996188119-1",
+        "playerName": "Bye Week Team",
+        "pokemon": ["Swalot", "Vaporeon", "Glaceon", "Floragato", "Kleavor", "Gastrodon", "Ditto"]
+      }
+    ]
+  },
+  {
+    "id": "1792190570080-0",
+    "name": "WCPL Season 5",
+    "generation": 9,
+    "format": "draft",
+    "teamSize": 11,
+    "teams": [
+      {
+        "id": "1792346680578-1",
+        "playerName": "Milly",
+        "isMyTeam": true,
+        "pokemon": ["Meowscarada", "Terapagos-Terastal", "Landorus-Therian", "Keldeo", "Charjabug", "Glaceon", "Cresselia", "Fezandipiti"],
+        "teraCaptains": ["Keldeo", "Charjabug", "Cresselia"]
+      },
+      {
+        "id": "1792351371652-0",
+        "playerName": "stetboy",
+        "pokemon": ["Infernape", "Iron Treads", "Greninja", "Iron Boulder", "Tyranitar", "Ceruledge", "Ninetales-Alola", "Enamorus"],
+        "teraCaptains": ["Iron Boulder", "Tyranitar"]
+      },
+      {
+        "id": "1792351458290-1",
+        "playerName": "BeBO + noctiphany",
+        "pokemon": ["Iron Valiant", "Raging Bolt", "Jirachi", "Corviknight", "Rillaboom", "Sylveon", "Umbreon", "Basculegion"],
+        "teraCaptains": ["Raging Bolt", "Rillaboom"]
+      },
+      {
+        "id": "1792351497029-2",
+        "playerName": "Xaoc",
+        "pokemon": ["Roaring Moon", "Deoxys-Speed", "Weezing-Galar", "Scizor", "Rotom-Heat", "Hawlucha", "Indeedee", "Regieleki", "Ditto"],
+        "teraCaptains": ["Hawlucha", "Regieleki"]
+      },
+      {
+        "id": "1792351545188-3",
+        "playerName": "Tymmyr",
+        "pokemon": ["Tornadus-Therian", "Gholdengo", "Samurott-Hisui", "Gliscor", "Cyclizar", "Ogerpon-Wellspring", "Lucario", "Amoonguss", "Smeargle"],
+        "teraCaptains": ["Tornadus-Therian", "Lucario", "Amoonguss"]
+      },
+      {
+        "id": "1793148996230-0",
+        "playerName": "Anisteria",
+        "pokemon": ["Great Tusk", "Zapdos", "Alomomola", "Chi-Yu", "Slowking-Galar", "Dragonite", "Polteageist", "Alcremie"],
+        "teraCaptains": ["Zapdos", "Slowking-Galar"]
+      }
+    ]
+  }
+]
