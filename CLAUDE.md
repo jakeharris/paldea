@@ -39,6 +39,7 @@ State shape: `{ leagues, selectedLeagueId, selectedTeamId, selectedPokemonIndex 
 | `smogon.ts` | Smogon `dump-pokemon` RPC: draft analysis + one standard set per mon (Draft → OU → National Dex → …), cached together. |
 | `damage.ts` | Wrapper over `@smogon/calc` (attacker/defender builders, field setup, OHKO chance). |
 | `offense-finder.ts` | Prep Wizard → Offense Finder search: fewest attackers (2+) whose learnsets OHKO the most opponents, ranked by coverage left after losing a member. KOs are checked against the opponent's Smogon set and a counter build (252 HP / 252+ in the hit defense). |
+| `defense-finder.ts` | Prep Wizard → Defense Finder: every opponent × my-mon pair calced both ways (their hardest hit, mine back, KO counts, speed), judged as a turn race → counters / checks / switch-in / loses. Also ranks defensive cores. |
 | `showdown-export.ts` | Showdown paste export + `calc.pokemonshowdown.com/?import=<base64>` links. |
 
 ### Pages — `src/pages/`
@@ -50,7 +51,7 @@ Organized by feature:
 - `ui/` — `Tooltip`
 - `teams/` — `LeagueSection`, `TeamCard`, `PokemonRow`, `PokemonSearch`, `SidePanel`, `SidePanelSprite`, `SidePanelSmogon`, `SidePanelChecklist`
 - `matchups/` — `MatchupHero`, `DefensiveTypeChart`, `CoveragePlanner`, `SpeedTierTool`, `MoveCategoryPanel`
-- `prep/` — `PrepWizard` (tool switcher), `OffenseFinder`, `LoadoutCard`. Shown on `/matchups?view=prep`; the hero's exclusions apply to both views.
+- `prep/` — `PrepWizard` (tool switcher), `OffenseFinder`, `LoadoutCard`, `DefenseFinder`, `PrepControls` (shared controls). Shown on `/matchups?view=prep`; the hero's exclusions apply to both views.
 
 ### Hooks — `src/hooks/`
 - `use-pokemon-search.ts` — Debounced autocomplete, returns `{ query, results, search(), clear() }`
@@ -58,6 +59,7 @@ Organized by feature:
 - `use-team-checklist.ts` — Runs checklist validators on a team
 - `use-matchup-moves.ts` — Async move categorization for two teams; cancel-safe via useEffect cleanup
 - `use-offense-finder.ts` — Runs the Offense Finder search with progress; cancel-safe
+- `use-defense-finder.ts` — Runs the Defense Finder calcs (fetches both teams' Smogon sets); cancel-safe
 
 ## Key Conventions
 

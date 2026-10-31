@@ -1,12 +1,13 @@
 import { useState } from "react";
 import type { DraftPokemon } from "@/services/types";
 import { OffenseFinder } from "./OffenseFinder";
+import { DefenseFinder } from "./DefenseFinder";
 
 type PrepTool = "offense" | "defense" | "lines";
 
 const TOOLS: { id: PrepTool; label: string; ready: boolean }[] = [
   { id: "offense", label: "Offense Finder", ready: true },
-  { id: "defense", label: "Defense Finder", ready: false },
+  { id: "defense", label: "Defense Finder", ready: true },
   { id: "lines", label: "Line Finder", ready: false },
 ];
 
@@ -42,6 +43,7 @@ export function PrepWizard({ myTeam, oppTeam, gen }: PrepWizardProps) {
       </div>
 
       {tool === "offense" && <OffenseFinder myTeam={myTeam} oppTeam={oppTeam} gen={gen} />}
+      {tool === "defense" && <DefenseFinder myTeam={myTeam} oppTeam={oppTeam} gen={gen} />}
     </div>
   );
 }
