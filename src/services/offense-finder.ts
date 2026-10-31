@@ -244,7 +244,7 @@ const CONDITION_TAGS: Record<string, string> = {
   upperhand: "Target must use priority",
 };
 
-function moveTags(move: PkmnMove): string[] {
+export function moveTags(move: PkmnMove): string[] {
   const tags: string[] = [];
   const cond = CONDITION_TAGS[move.id];
   if (cond) tags.push(cond);
@@ -263,7 +263,7 @@ export function isPremierMove(move: PkmnMove): boolean {
   return !move.selfdestruct;
 }
 
-function isUsableMove(move: PkmnMove, weather: string, premierOnly: boolean): boolean {
+export function isUsableMove(move: PkmnMove, weather: string, premierOnly: boolean): boolean {
   if (move.category === "Status") return false;
   if (move.isZ || move.isMax || move.ohko) return false;
   if (EXCLUDED_MOVES.has(move.id)) return false;
@@ -276,7 +276,7 @@ function isUsableMove(move: PkmnMove, weather: string, premierOnly: boolean): bo
   return true;
 }
 
-async function getDamagingMoves(name: string, gen: number): Promise<PkmnMove[]> {
+export async function getDamagingMoves(name: string, gen: number): Promise<PkmnMove[]> {
   const learnable = await getLearnable(name, gen);
   if (!learnable) return [];
   // learnable() accumulates every gen — keep only moves learnable in `gen`
@@ -291,13 +291,13 @@ async function getDamagingMoves(name: string, gen: number): Promise<PkmnMove[]> 
   return moves;
 }
 
-function abilitiesOf(p: DraftPokemon): string[] {
+export function abilitiesOf(p: DraftPokemon): string[] {
   return [...new Set([p.abilities.primary, p.abilities.secondary, p.abilities.hidden].filter(
     (a): a is string => !!a,
   ))];
 }
 
-function requiredItemOf(name: string): string | undefined {
+export function requiredItemOf(name: string): string | undefined {
   const species = getDexSpecies(name);
   return species?.requiredItem ?? species?.requiredItems?.[0];
 }

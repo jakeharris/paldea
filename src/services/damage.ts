@@ -61,6 +61,7 @@ export interface AttackerConfig {
   level: number;
 }
 
+/** Any explicit spread — used for defenders and for Smogon-set attackers */
 export interface DefenderConfig {
   species: string;
   ability: string;
@@ -68,15 +69,21 @@ export interface DefenderConfig {
   nature: string;
   evs: Partial<StatSpread>;
   level: number;
+  teraType?: string;
 }
 
 export interface DamageOutcome {
+  /** Raw damage range in HP */
+  minDamage: number;
+  maxDamage: number;
   /** Damage as % of defender max HP */
   minPercent: number;
   maxPercent: number;
   /** Chance (0–1) the hit KOs from full HP, after hazards when enabled */
   ohkoChance: number;
   desc: string;
+  /** Fewest hits that can KO and the chance at that count (only with `withKo`); n = 0 means not within 9 */
+  ko?: { n: number; chance: number };
 }
 
 /** Abilities that let a hit through Sturdy / Disguise / Ice Face */
@@ -126,6 +133,7 @@ export function buildDefender(gen: number, cfg: DefenderConfig): Pokemon {
     nature: cfg.nature as CalcData.NatureName,
     ability: cfg.ability as CalcData.AbilityName,
     item: (cfg.item || undefined) as CalcData.ItemName | undefined,
+    teraType: cfg.teraType as CalcData.TypeName | undefined,
     boostedStat: cfg.item === "Booster Energy" ? "auto" : undefined,
     evs: cfg.evs,
   });
@@ -165,6 +173,7 @@ export function runCalc(
   defender: Pokemon,
   move: PkmnMove,
   field: FieldOptions,
+  withKo = false,
 ): DamageOutcome {
   const g = calcGen(gen);
   const attackerAbility = attacker.ability ?? "";
@@ -182,6 +191,14 @@ export function runCalc(
     ohkoChance = ko.n === 1 ? ko.chance ?? 0 : 0;
   }
 
+  let ko: DamageOutcome["ko"];
+  if (withKo) {
+    const k = max > 0 ? result.kochance(false) : { n: 0, chance: 0 };
+    ko = { n: k.n, chance: k.chance ?? 0 };
+    // Sturdy / Disguise / Ice Face leave it standing once — the next hit finishes
+    if (ko.n === 1 && blocksOhko(attackerAbility, defenderAbility, move)) ko = { n: 2, chance: 1 };
+  }
+
   let desc = "";
   try {
     desc = result.fullDesc("%", false);
@@ -190,9 +207,12 @@ export function runCalc(
   }
 
   return {
+    minDamage: min,
+    maxDamage: max,
     minPercent: (min / hp) * 100,
     maxPercent: (max / hp) * 100,
     ohkoChance,
     desc,
+    ko,
   };
 }
