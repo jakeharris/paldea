@@ -35,6 +35,14 @@ The app is currently tailored to a specific draft league format but is designed 
 - Speed tier comparison — side-by-side sorted base speed lists plus a Speed Creep Calculator: choose your Pokémon, set scarf/stage for both sides (±6 stages), and see EVs needed to outspeed each opponent scenario (0 EV / 252 Neutral / 252 +Spe)
 - Move category panel — browse learnable moves grouped by role (Priority, Pivots, Setup, Hazards, Hazard Removal, Healing, Status, Terrain/Weather/Screens); Gen 9 learnsets only
 
+### Prep Wizard
+
+The second tab on the Matchups page (`/matchups?view=prep`), using the same opponent and exclusions as the overview. Results come from real damage calcs (`@smogon/calc`) using each Pokémon's Smogon set.
+
+- Offense Finder — the fewest attackers (2–4) on your roster whose learnsets OHKO the most of the opponent's team; each KO is checked against their Smogon set and/or a counter build (252 HP / 252+ in the defense the hit targets). Loadouts are ranked by how much coverage is left after losing any one member, and sets that reach the goal alone are listed separately as solo threats. Options: OHKO goal, roll threshold, premier moves only, Choice Band/Specs limit, weather, terrain, Stealth Rock. Each loadout can be copied as a Showdown import or opened in the Showdown damage calc
+- Defense Finder — every opponent × your-Pokémon pairing calced both ways (their hardest hit, your hardest hit back, who moves first) and judged as a turn race: counters / checks / switch-in / loses. A threat grid shows their best matchups first (tap a cell for the calcs), and a defensive core picker (up to 3 of yours) shows what each core answers, with suggested best pairs. Options: Smogon set vs. max offense/bulk builds, learnset vs. Smogon set moves, roll assumptions, opponent Tera captains, weather, terrain
+- Line Finder — listed in the tool switcher but not yet available
+
 ### PWA
 
 - Installable, offline-capable
